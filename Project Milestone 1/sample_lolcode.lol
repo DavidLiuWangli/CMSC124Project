@@ -1,3 +1,3 @@
 HAI 
-VISIBLE "HelloWorld!"
+VISIBLE "Hello World!"
 KTHXBYE

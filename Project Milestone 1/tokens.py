@@ -9,7 +9,7 @@ TOKENS = {
     # LITERALS
     'NUMBR_LITERAL': r'^(\-?(0+)|\-?[1-9][0-9]*)$',
     'NUMBAR_LITERAL': r'^\-?([0-9]+\.[0-9]*|[0-9]*\.[0-9]+)$',
-    'YARN_LITERAL': r'^\”[^\”]*\”$',
+    'YARN_LITERAL': r'^\"[^\"]*\"$',
     'TROOF_LITERAL': r'^(WIN|FAIL)$',
     'TYPE_LITERAL': r'^(NUMBR|NUMBAR|YARN|TROOF|NOOB)$',
 

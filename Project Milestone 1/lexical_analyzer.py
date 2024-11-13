@@ -10,26 +10,26 @@ def lexical_analyzer(code):
         regexes[token_type] = re.compile(pattern)
         
     for line_number, line in enumerate(lines, start=1):
-        position = 0
         line = line.strip()
         if not line: 
             continue
+        segments = re.findall(r'"[^"]*"|[A-Za-z][A-Za-z0-9_ ]*', line)
         
-        while position < len(line):
+        for segment in segments:
             matched = False
+            
             for token_type, regex in regexes.items():
-                match = regex.match(line, position)
+                match = regex.fullmatch(segment.strip())
                 if match:
-                    lexeme = match.group(0)
                     if token_type != 'WHITESPACE':
-                        tokens.append((token_type, lexeme))
-                    position = match.end()
+                        tokens.append((token_type, segment))
                     matched = True
                     break
+                
             if not matched:
-                context = line[position:]
-                print(f"Error: Unexpected content on line {line_number}: '{context}'")
+                print(f"Error: Unexpected content on line {line_number}: '{segment}'")
                 break
+            
         tokens.append(("NEWLINE", "\\n"))
 
     return tokens
