@@ -1,19 +1,16 @@
 import re
 
-# IDENTIFIERS
-TOKENS = {
-    'VARIABLE_IDENTIFIER': r'^[A-Za-z][A-Za-z0-9_]*$',
-    'FUNCTION_IDENTIFIER': r'^[A-Za-z][A-Za-z0-9_]*$',
-    'LOOP_IDENTIFIER': r'^[A-Za-z][A-Za-z0-9_]*$',
 
-    # LITERALS
+TOKENS = {
+
+    # Literals
     'NUMBR_LITERAL': r'^(\-?(0+)|\-?[1-9][0-9]*)$',
     'NUMBAR_LITERAL': r'^\-?([0-9]+\.[0-9]*|[0-9]*\.[0-9]+)$',
     'YARN_LITERAL': r'^\"[^\"]*\"$',
     'TROOF_LITERAL': r'^(WIN|FAIL)$',
     'TYPE_LITERAL': r'^(NUMBR|NUMBAR|YARN|TROOF|NOOB)$',
 
-    # KEYWORDS
+    # Keywords
     'PROGRAM_START': r'^HAI$',
     'PROGRAM_END': r'^KTHXBYE$',
     'DATA_SECTION_START': r'^WAZZUP$',
@@ -88,6 +85,11 @@ TOKENS = {
     'RETURN': r'^FOUND YR$',
     'EXIT': r'^GTFO$',
 
+    # Identifiers
+    'VARIABLE_IDENTIFIER': r'^[A-Za-z][A-Za-z0-9_]*$',
+    'FUNCTION_IDENTIFIER': r'^[A-Za-z][A-Za-z0-9_]*$',
+    'LOOP_IDENTIFIER': r'^[A-Za-z][A-Za-z0-9_]*$',
+    
     # Miscellaneous
     'MKAY': r'^MKAY$',
     'NEWLINE': r'\n+',
