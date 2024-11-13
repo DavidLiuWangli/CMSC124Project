@@ -1,27 +1,37 @@
 from tokens import TOKENS
 import re
 
-# Does not work?
 def lexical_analyzer(code):
     tokens = []
     lines = code.splitlines()
+    regexes = {}
+    
+    for token_type, pattern in TOKENS.items():
+        regexes[token_type] = re.compile(pattern)
+        
     for line_number, line in enumerate(lines, start=1):
-        line = line.strip()  # Remove leading/trailing whitespace
-        if not line:
-            continue  # Skip empty lines
-        match_found = False
-        for token_type, pattern in TOKENS.items():
-            regex = re.compile(pattern)
-            match = regex.match(line)
-            if match:
-                lexeme = match.group(0)
-                if token_type != 'WHITESPACE':
-                    tokens.append((token_type, lexeme))
-                match_found = True
+        position = 0
+        line = line.strip()
+        if not line: 
+            continue
+        
+        while position < len(line):
+            matched = False
+            for token_type, regex in regexes.items():
+                match = regex.match(line, position)
+                if match:
+                    lexeme = match.group(0)
+                    if token_type != 'WHITESPACE':
+                        tokens.append((token_type, lexeme))
+                    position = match.end()
+                    matched = True
+                    break
+            if not matched:
+                context = line[position:]
+                print(f"Error: Unexpected content on line {line_number}: '{context}'")
                 break
-        if not match_found:
-            print(f"Error: Unexpected content on line {line_number}: '{line}'")
-            raise ValueError(f'Unexpected content on line {line_number}: "{line}"')
+        tokens.append(("NEWLINE", "\\n"))
+
     return tokens
 
 def read_code_file(filename):
