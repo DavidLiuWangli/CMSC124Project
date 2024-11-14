@@ -1,16 +1,14 @@
 import re
 
-
-TOKENS = {
-
-    # Literals
-    'NUMBR_LITERAL': r'^(\-?(0+)|\-?[1-9][0-9]*)$',
-    'NUMBAR_LITERAL': r'^\-?([0-9]+\.[0-9]*|[0-9]*\.[0-9]+)$',
-    'YARN_LITERAL': r'^\"[^\"]*\"$',
-    'TROOF_LITERAL': r'^(WIN|FAIL)$',
-    'TYPE_LITERAL': r'^(NUMBR|NUMBAR|YARN|TROOF|NOOB)$',
-
-    # Keywords
+KEYWORDS = {
+    # Separators
+    'PLUS': r'^\+$',
+    'AN_SEP': r'^AN$', 
+    
+    # Comments
+    'COMMENT': r'^BTW\s.*$',
+    
+     # Keywords
     'PROGRAM_START': r'^HAI$',
     'PROGRAM_END': r'^KTHXBYE$',
     'DATA_SECTION_START': r'^WAZZUP$',
@@ -84,14 +82,25 @@ TOKENS = {
     'FUNC_CALL': r'^I IZ$',
     'RETURN': r'^FOUND YR$',
     'EXIT': r'^GTFO$',
+    
+     # Miscellaneous
+    'MKAY': r'^MKAY$',
+    'NEWLINE': r'\n+',
+    'WHITESPACE': r'^\s+' 
+}
 
+LITERALS = {
+    # Literals
+    'NUMBR_LITERAL': r'^(\-?(0+)|\-?[1-9][0-9]*)$',
+    'NUMBAR_LITERAL': r'^\-?([0-9]+\.[0-9]*|[0-9]*\.[0-9]+)$',
+    'YARN_LITERAL': r'^\"[^\"]*\"$',
+    'TROOF_LITERAL': r'^(WIN|FAIL)$',
+    'TYPE_LITERAL': r'^(NUMBR|NUMBAR|YARN|TROOF|NOOB)$'
+}
+
+IDENTIFIERS = {   
     # Identifiers
     'VARIABLE_IDENTIFIER': r'^[A-Za-z][A-Za-z0-9_]*$',
     'FUNCTION_IDENTIFIER': r'^[A-Za-z][A-Za-z0-9_]*$',
-    'LOOP_IDENTIFIER': r'^[A-Za-z][A-Za-z0-9_]*$',
-    
-    # Miscellaneous
-    'MKAY': r'^MKAY$',
-    'NEWLINE': r'\n+',
-    'WHITESPACE': r'^\s+'
+    'LOOP_IDENTIFIER': r'^[A-Za-z][A-Za-z0-9_]*$'    
 }
