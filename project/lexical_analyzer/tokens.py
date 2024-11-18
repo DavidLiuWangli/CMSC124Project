@@ -8,7 +8,7 @@ KEYWORDS = {
     # Comments
     'COMMENT': r'^BTW\s.*$',
     
-     # Keywords
+    # Keywords
     'PROGRAM_START': r'^HAI$',
     'PROGRAM_END': r'^KTHXBYE$',
     'DATA_SECTION_START': r'^WAZZUP$',
