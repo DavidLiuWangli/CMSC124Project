@@ -6,13 +6,13 @@ REGEX_MAP= {
     'AN_SEP': r'^AN$', 
     
     # Comments
-    'COMMENT': r'^BTW$',
+    'BTW': r'^BTW$',
     'MULTI_COMMENT_START': r'^OBTW$',
     'MULTI_COMMENT_END': r'^TLDR$',
     
     # Keywords
-    'PROGRAM_START': r'^HAI$',
-    'PROGRAM_END': r'^KTHXBYE$',
+    'HAI': r'^HAI$',
+    'KTHXBYE': r'^KTHXBYE$',
     'DATA_SECTION_START': r'^WAZZUP$',
     'DATA_SECTION_END': r'^BUHBYE$',
     'COMMENT': r'^BTW.*$',
@@ -101,4 +101,8 @@ REGEX_MAP= {
     'VARIABLE_IDENTIFIER': r'^[A-Za-z][A-Za-z0-9_]*$',
     'FUNCTION_IDENTIFIER': r'^[A-Za-z][A-Za-z0-9_]*$',
     'LOOP_IDENTIFIER': r'^[A-Za-z][A-Za-z0-9_]*$',
+}
+
+CLASSIFICATION = {
+    "HAI" : "Code Delimiter"
 }
