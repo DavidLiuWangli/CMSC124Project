@@ -6,9 +6,11 @@ KEYWORDS = {
     'AN_SEP': r'^AN$', 
     
     # Comments
-    'COMMENT': r'^BTW\s.*$',
+    'COMMENT': r'^BTW$',
+    'MULTI_COMMENT_START': r'^OBTW$',
+    'MULTI_COMMENT_END': r'^TLDR$',
     
-     # Keywords
+    # Keywords
     'PROGRAM_START': r'^HAI$',
     'PROGRAM_END': r'^KTHXBYE$',
     'DATA_SECTION_START': r'^WAZZUP$',
@@ -102,5 +104,5 @@ IDENTIFIERS = {
     # Identifiers
     'VARIABLE_IDENTIFIER': r'^[A-Za-z][A-Za-z0-9_]*$',
     'FUNCTION_IDENTIFIER': r'^[A-Za-z][A-Za-z0-9_]*$',
-    'LOOP_IDENTIFIER': r'^[A-Za-z][A-Za-z0-9_]*$'    
+    'LOOP_IDENTIFIER': r'^[A-Za-z][A-Za-z0-9_]*$',
 }
