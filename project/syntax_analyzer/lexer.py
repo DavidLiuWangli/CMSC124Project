@@ -68,25 +68,28 @@ def lexical_analyzer(code):
                     if token.startswith("BTW"):
                         expanded_words.append(token)
                     else:
-                        expanded_words.extend(token.split())
+                        for other in token.split():
+                            expanded_words.append(other)
+        
+        print(expanded_words);
 
         i = 0
 
         while i < len(expanded_words):
             matched = False
 
-            for j in range(min(i + 4, len(expanded_words) - 1), i - 1, -1):
+            for j in range(len(expanded_words) - 1, i - 1, -1):
                 current = " ".join(expanded_words[i:j + 1])
 
                 for word_type, pattern in REGEX_TOKENS.items():
                     regex = re.compile(pattern)
 
                     if regex.fullmatch(current):
-                        if word_type == "Comment":
+                        if word_type == "BTW":
                             tokens.append(("BTW", "BTW"))
 
                             if len(current) > 3:
-                                tokens.append((current[4:], "text"))
+                                tokens.append((current[3:], "text"))
                         else:
                             tokens.append((current, word_type))
                         
@@ -98,10 +101,12 @@ def lexical_analyzer(code):
                     break
 
             if not matched:
+                print(expanded_words[i])
                 print("BAD TOKEN")
                 return tokens
 
         line_number += 1
         tokens.append(("\\n", "linebreak"))
-
+    
+    print(tokens)
     return tokens

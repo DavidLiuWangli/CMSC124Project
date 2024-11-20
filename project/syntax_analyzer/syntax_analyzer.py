@@ -1,47 +1,71 @@
+import sys
 from lexer import lexical_analyzer
 from grammars import GRAMMARS
 
-reacted = 0
-
 def parse(non_terminal, tokens, position):
-    global reacted
-    print("TERMINAL")
+    """
+    Recursive function to parse a sequence of tokens based on the grammar rules
+    defined in GRAMMARS.
+    
+    Args:
+        non_terminal (str): The current non-terminal to parse.
+        tokens (list): A list of token tuples produced by the lexical analyzer.
+        position (int): The current position in the tokens list.
+
+    Returns:
+        (bool, int): A tuple where the first element indicates success (True/False)
+        and the second element is the updated token position.
+    """
     if position >= len(tokens):
-        return False, position
-    print(tokens[position], non_terminal)
-    print("GRAMMARS: ", GRAMMARS[non_terminal]);
+        return False, position  # End of input reached prematurely.
+
+    lookahead = tokens[position][1] if position < len(tokens) else None
+
+    # Iterate over all productions for the current non-terminal.
     for production in GRAMMARS[non_terminal]:
-        print("PRODUCTION")
-        print(production)
         current_position = position
         success = True
+        # Check each symbol in the production.
         for symbol in production:
             if symbol in GRAMMARS:  # Non-terminal
                 result, current_position = parse(symbol, tokens, current_position)
                 if not result:
                     success = False
                     break
+            elif symbol == '':  # Epsilon production.
+                continue
             else:  # Terminal
-                if symbol == '':
-                    continue
                 if current_position < len(tokens) and tokens[current_position][1] == symbol:
-                    print("REACTED: ", symbol)
+                    print(symbol)
                     current_position += 1
-                    reacted += 1
                 else:
-                    print("NOOOOOOOO", symbol)
                     success = False
                     break
+
         if success:
             return True, current_position
+
     return False, position
 
-tokens = lexical_analyzer("OBTW what is     happening\ntaalga baaa hahahaha a ah    aa\nTLDR\nHAI\nVISIBLE 1\nKTHXBYE\n")
-print(tokens)
-result, final_position = parse("program", tokens, 0)
-print(reacted)
-if reacted == len(tokens):
-    print("Parsing succeeded!")
-else:
-    print("Parsing failed.")
+
+def main():
+    # Read the code from a file.
+    code = ""
+    with open("../../lolcode_test_cases/01_variables.lol", 'r') as file:
+        code = file.read()
+
+    # Generate tokens using the lexical analyzer.
+    tokens = lexical_analyzer(str(code))
+
+    # Parse the tokens starting from the initial non-terminal.
+    result, final_position = parse("program", tokens, 0)
+
+    # Check if parsing succeeded and all tokens were consumed.
+    if result and final_position == len(tokens):
+        print("Parsing succeeded!")
+    else:
+        print("Parsing failed.")
+
+if __name__ == "__main__":
+    main()
 

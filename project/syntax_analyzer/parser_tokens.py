@@ -6,7 +6,7 @@ REGEX_TOKENS = {
     'AN': r'^AN$', 
     
     # Comments
-    'BTW': r'^BTW$',
+    'BTW': r'^BTW\s.*$',
     'OBTW': r'^OBTW$',
     'TLDR': r'^TLDR$',
     
@@ -25,7 +25,7 @@ REGEX_TOKENS = {
     'PRODUKT OF': r'^PRODUKT OF$',
     'QUOSHUNT OF': r'^QUOSHUNT OF$',
     'MOD OF': r'^MOD OF$',
-    'BUGGR OF': r'^BIGGR OF$',
+    'BIGGR OF': r'^BIGGR OF$',
     'SMALLR OF': r'^SMALLR OF$',
 
     # Boolean operations

@@ -28,7 +28,7 @@ GRAMMARS = {
         ['function-call']
     ],
     'comment': [
-        ['BTW', 'comtext', 'end-of-line']
+        ['BTW', 'comtext', 'linebreak']
     ],
     'multi-line-comment': [
         ['OBTW', 'comtext', 'linebreak', 'multi-content', 'comtext', 'TLDR', 'end-of-line']
@@ -43,6 +43,7 @@ GRAMMARS = {
     ],
     'declarations': [
         ['I HAS A', 'varident', 'initialization', 'end-of-line', 'declarations'],
+        ['end-of-line', 'declarations'],
         ['']
     ],
     'initialization': [
@@ -91,7 +92,7 @@ GRAMMARS = {
         ['SUM OF'],
         ['DIFF OF'],
         ['PRODUKT OF'],
-        ['QUOSHUNT'],
+        ['QUOSHUNT OF'],
         ['MOD OF']
     ],
     'concatenation': [
@@ -115,11 +116,13 @@ GRAMMARS = {
     ],
     'comparison-operator': [
         ['BOTH SAEM'],
-        ['DIFFRINT']
+        ['DIFFRINT'],
+        ['BIGGR OF'],
+        ['SMALLR OF']
     ],
     'inequality': [
-        ['BIGGR OF', 'AN'],
-        ['SMALLR OF', 'AN'],
+        ['BIGGR OF', 'operand', 'AN'],
+        ['SMALLR OF', 'operand', 'AN'],
         ['']
     ],
     'all-any-expression': [
@@ -251,11 +254,17 @@ GRAMMARS = {
         ['']
     ],
     'end-of-line': [
-        ['comment', 'linebreak'],
+        ['comment'],
         ['linebreak']
     ],
     'comtext': [
         ['text'],
         ['']
+    ],
+    'funcident': [
+        ['varident']
+    ],
+    'loopident': [
+        ['varident']
     ]
 }
