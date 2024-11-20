@@ -5,7 +5,7 @@ def create_styled_label(parent, text):
         parent,
         text=text,
         fg="white",
-        font=("Consolas", 10),
+        font=("Consolas", 14),
         bg="black",
         padx=2,
         pady=2
