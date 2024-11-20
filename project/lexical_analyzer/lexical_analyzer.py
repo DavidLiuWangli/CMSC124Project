@@ -1,4 +1,4 @@
-from tokens import REGEX_MAP
+from lexical_analyzer.tokens import REGEX_MAP
 import re
 
 def lexical_analyzer(code):
@@ -17,10 +17,10 @@ def lexical_analyzer(code):
 
         # Handle multi-line comments
         if line.startswith("OBTW"):
-            tokens.append(("MULTI_COMMENT_START", "OBTW"))
+            tokens.append(("OBTW", "MULTI_COMMENT_START"))
             
             if len(line) > 4:
-                tokens.append(("COMMENT_TEXT", line[4:]))
+                tokens.append((line[4:], "COMMENT_TEXT"))
             
             line_number += 1
             
@@ -30,7 +30,7 @@ def lexical_analyzer(code):
             line = lines[line_number].strip()
 
             while line_number < len(lines) and not line.endswith("TLDR"):
-                tokens.append(("COMMENT_TEXT", line))
+                tokens.append((line, "COMMENT_TEXT"))
                 line_number += 1
 
                 if line_number == len(lines):
@@ -39,8 +39,8 @@ def lexical_analyzer(code):
                 line = lines[line_number].strip()
 
             if line.endswith("TLDR"):
-                tokens.append(("COMMENT_TEXT", line[-4:]))
-                tokens.append(("MULTI_COMMENT_END", "TLDR"))
+                tokens.append((line[-4:], "COMMENT_TEXT"))
+                tokens.append(("TLDR", "MULTI_COMMENT_END"))
             else:
                 raise Exception("TLDR not found")
 
@@ -78,12 +78,12 @@ def lexical_analyzer(code):
 
                     if regex.fullmatch(current):
                         if word_type == "COMMENT":
-                            tokens.append(("COMMENT_START", "BTW"))
+                            tokens.append(("BTW", "COMMENT_START"))
 
                             if len(current) > 3:
-                                tokens.append(("COMMENT_TEXT", current[4:]))
+                                tokens.append((current[4:], "COMMENT_TEXT"))
                         else:
-                            tokens.append((word_type, current))
+                            tokens.append((current, word_type))
                         
                         matched = True
                         i = j + 1
@@ -97,21 +97,6 @@ def lexical_analyzer(code):
                 return tokens
 
         line_number += 1
-        tokens.append(("NEWLINE", "\\n"))
+        tokens.append(("\\n", "NEWLINE"))
 
     return tokens
-
-def read_code_file(filename):
-    with open(filename, 'r') as file:
-        return file.read()
-
-def write_tokens_file(tokens, filename):
-    with open(filename, 'w') as file:
-        for token_type, lexeme in tokens:
-            file.write(f"{token_type}: {lexeme}\n")
-
-if __name__ == "__main__":
-    path = input()
-    sample_code = read_code_file(path)
-    tokens = lexical_analyzer(sample_code)
-    write_tokens_file(tokens, "output.txt")

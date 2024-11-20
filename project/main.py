@@ -11,10 +11,10 @@ root.geometry("1000x500")
 root.configure(bg="black")
 
 # Widgets
-Console(root)
-Symbol_Table(root)
-Text_Editor(root)
-Tokens_List(root)
+text_editor = Text_Editor(root)
+tokens_list = Tokens_List(root)
+symbol_table = Symbol_Table(root)
+Console(root, text_editor, tokens_list, symbol_table)
 
 # Run application
 root.mainloop()
