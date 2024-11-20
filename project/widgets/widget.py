@@ -12,6 +12,6 @@ class Widget(ABC):
         self.header = tk.Frame(self.content, bg="black")
         self.header.pack(fill=tk.X, side=tk.TOP)
         # Line Divider
-        divider = tk.Frame(self.content, bg="white", height=2)
+        divider = tk.Frame(self.content, bg="white", height=4)
         divider.pack(fill=tk.X, side=tk.TOP)
     
