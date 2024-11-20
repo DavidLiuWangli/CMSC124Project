@@ -1,6 +1,6 @@
 import re
 
-KEYWORDS = {
+REGEX_MAP= {
     # Separators
     'PLUS': r'^\+$',
     'AN_SEP': r'^AN$', 
@@ -88,19 +88,15 @@ KEYWORDS = {
      # Miscellaneous
     'MKAY': r'^MKAY$',
     'NEWLINE': r'\n+',
-    'WHITESPACE': r'^\s+' 
-}
+    'WHITESPACE': r'^\s+',
 
-LITERALS = {
     # Literals
     'NUMBR_LITERAL': r'^(\-?(0+)|\-?[1-9][0-9]*)$',
-    'NUMBAR_LITERAL': r'^\-?([0-9]+\.[0-9]*|[0-9]*\.[0-9]+)$',
+    'NUMBAR_LITERAL': r'^\-?[0-9]+\.[0-9]+$',
     'YARN_LITERAL': r'^\"[^\"]*\"$',
     'TROOF_LITERAL': r'^(WIN|FAIL)$',
-    'TYPE_LITERAL': r'^(NUMBR|NUMBAR|YARN|TROOF|NOOB)$'
-}
+    'TYPE_LITERAL': r'^(NUMBR|NUMBAR|YARN|TROOF|NOOB)$',
 
-IDENTIFIERS = {   
     # Identifiers
     'VARIABLE_IDENTIFIER': r'^[A-Za-z][A-Za-z0-9_]*$',
     'FUNCTION_IDENTIFIER': r'^[A-Za-z][A-Za-z0-9_]*$',
