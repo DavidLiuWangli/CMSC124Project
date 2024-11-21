@@ -55,16 +55,17 @@ REGEX_TOKENS = {
     'GIMMEH': r'^GIMMEH$',
 
     # Conditionals
-    'O RLY': r'^O RLY\?$',
+    'O RLY?': r'^O RLY\?$',
     'YA RLY': r'^YA RLY$',
     'MEBBE': r'^MEBBE$',
     'NO WAI': r'^NO WAI$',
     'OIC': r'^OIC$',
 
     # Switch-case
-    'WTF': r'^WTF\?$',
+    'WTF?': r'^WTF\?$',
     'OMG': r'^OMG$',
     'OMGWTF': r'^OMGWTF$',
+    'GTFO': r'^GTFO$',
 
     # Loops
     'IM IN YR': r'^IM IN YR$',

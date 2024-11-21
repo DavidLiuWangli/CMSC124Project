@@ -3,6 +3,7 @@ from lexer import lexical_analyzer
 from grammars import GRAMMARS
 
 def parse(non_terminal, tokens, position):
+    global scanned_lexemes
     """
     Recursive function to parse a sequence of tokens based on the grammar rules
     defined in GRAMMARS.
@@ -16,10 +17,6 @@ def parse(non_terminal, tokens, position):
         (bool, int): A tuple where the first element indicates success (True/False)
         and the second element is the updated token position.
     """
-    if position >= len(tokens):
-        return False, position  # End of input reached prematurely.
-
-    lookahead = tokens[position][1] if position < len(tokens) else None
 
     # Iterate over all productions for the current non-terminal.
     for production in GRAMMARS[non_terminal]:
@@ -36,7 +33,7 @@ def parse(non_terminal, tokens, position):
                 continue
             else:  # Terminal
                 if current_position < len(tokens) and tokens[current_position][1] == symbol:
-                    print(symbol)
+                    print(current_position, symbol, GRAMMARS[non_terminal])
                     current_position += 1
                 else:
                     success = False
@@ -49,13 +46,15 @@ def parse(non_terminal, tokens, position):
 
 
 def main():
+    global scanned_lexemes
     # Read the code from a file.
     code = ""
-    with open("../../lolcode_test_cases/01_variables.lol", 'r') as file:
+    with open("../../lolcode_test_cases/" + input(), 'r') as file:
         code = file.read()
 
     # Generate tokens using the lexical analyzer.
     tokens = lexical_analyzer(str(code))
+
 
     # Parse the tokens starting from the initial non-terminal.
     result, final_position = parse("program", tokens, 0)
@@ -64,7 +63,7 @@ def main():
     if result and final_position == len(tokens):
         print("Parsing succeeded!")
     else:
-        print("Parsing failed.")
+        print("Unexpected token:", tokens[final_position])
 
 if __name__ == "__main__":
     main()

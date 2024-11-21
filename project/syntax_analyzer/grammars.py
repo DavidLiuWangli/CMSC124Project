@@ -20,12 +20,13 @@ GRAMMARS = {
         ['multi-line-comment'],
         ['input'],
         ['output'],
-        ['expression', 'end-of-line'],
+        ['re-casting'],
         ['variable-assignment'],
         ['condition-block'],
         ['switch-case block'],
-        ['loop block'],
-        ['function-call']
+        ['loop-block'],
+        ['function-call'],
+        ['function']
     ],
     'comment': [
         ['BTW', 'comtext', 'linebreak']
@@ -70,13 +71,15 @@ GRAMMARS = {
         ['typecasting']
     ],
     'input': [
-        ['GIMMEH', 'varident', 'end-of-line']
+        ['GIMMEH', 'variable-reference', 'end-of-line']
     ],
     'output': [
         ['VISIBLE', 'operand', 'output-operands', 'end-of-line']
     ],
     'output-operands': [
         ['+', 'operand', 'output-operands'],
+        ['AN', 'operand', 'output-operands'],
+        ['operand', 'output-operands'],
         ['']
     ],
     'operand': [
@@ -134,7 +137,7 @@ GRAMMARS = {
     ],
     'all-any-operands': [
         ['AN', 'all-any-operand', 'all-any-operands'],
-        ['all-any-operand']
+        ['']
     ],
     'all-any-operand': [
         ['varident'],
@@ -173,7 +176,7 @@ GRAMMARS = {
         ['varident', 'IS NOW A', 'type', 'end-of-line']
     ],
     'variable-assignment': [
-        ['variable-reference', 'R', 'value'],
+        ['variable-reference', 'R', 'value', 'end-of-line'],
     ],
     'variable-reference': [
         ['varident'],
@@ -184,21 +187,21 @@ GRAMMARS = {
         ['GTFO']
     ],
     'condition-block': [
-        ['expression', 'end-of-line', 'O RLY?', 'end-of-line', 'YA RLY', 'end-of-line', 'statement', 'else-if-chain', 'else-block', 'end-of-line', 'OIC', 'end-of-line']
+        ['expression', 'end-of-line', 'O RLY?', 'end-of-line', 'YA RLY', 'end-of-line', 'statements', 'else-if-chain', 'else-block', 'OIC', 'end-of-line']
     ],
     'else-if-chain': [
         ['else-if-block', 'else-if-chain'],
         ['']
     ],
     'else-if-block': [
-        ['MEBBE', 'expression', 'end-of-line', 'statement', 'end-of-line']
+        ['MEBBE', 'expression', 'end-of-line', 'statements']
     ],
     'else-block': [
-        ['NO WAI', 'end-of-line', 'statement', 'end-of-line'],
+        ['NO WAI', 'end-of-line', 'statements'],
         ['']
     ],
     'switch-case block': [
-        ['varident', ',', 'WTF?', 'end-of-line', 'cases-chain', 'default-case-block', 'OIC'],
+        ['varident', 'end-of-line', 'WTF?', 'end-of-line', 'cases-chain', 'default-case-block', 'OIC', 'end-of-line'],
         ['WTF?', 'end-of-line', 'cases-chain', 'default-case-block', 'OIC', 'end-of-line']
     ],
     'cases-chain': [
@@ -206,14 +209,19 @@ GRAMMARS = {
         ['']
     ],
     'case-block': [
-        ['OMG', 'literal', 'end-of-line', 'control-body', 'end-of-line']
+        ['OMG', 'literal', 'end-of-line', 'control-body']
     ],
     'default-case-block': [
-        ['OMGWTF', 'literal', 'end-of-line', 'control-body', 'end-of-line'],
+        ['OMGWTF', 'end-of-line', 'control-body'],
+        ['']
+    ],
+    'control-body': [
+        ['GTFO', 'end-of-line'],
+        ['statement', 'control-body'],
         ['']
     ],
     'loop-block': [
-        ['IM IN YR', 'loopident', 'loop-direction', 'YR', 'varident', 'loop-condition', 'end-of-line', 'control-body', 'end-of-line', 'IM OUTTA YR', 'loopident', 'end-of-line']
+        ['IM IN YR', 'loopident', 'loop-direction', 'YR', 'varident', 'loop-condition', 'end-of-line', 'control-body', 'IM OUTTA YR', 'loopident', 'end-of-line']
     ],
     'loop-direction': [
         ['UPPIN'],
@@ -246,11 +254,12 @@ GRAMMARS = {
         ['']
     ],
     'return': [
-        ['FOUND YR', 'value'],
-        ['GTFO']
+        ['FOUND YR', 'value', 'end-of-line'],
+        ['GTFO', 'end-of-line']
     ],
     'function-body': [
         ['statement', 'function-body'],
+        ['return', 'function-body'],
         ['']
     ],
     'end-of-line': [

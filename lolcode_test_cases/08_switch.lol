@@ -12,8 +12,8 @@ HAI
 
 	VISIBLE "Choice: "
 	GIMMEH choice
-
-	choice
+    
+    choice
 	WTF?
 		OMG 1
 			VISIBLE "Enter birth year: "
@@ -23,12 +23,12 @@ HAI
 		OMG 2
 			VISIBLE "Enter bill cost: "
 			GIMMEH input
-			VISIBLE "Tip: " PRODUCKT OF input AN 0.1
+			VISIBLE "Tip: " AN PRODUKT OF input AN 0.1
 			GTFO
 		OMG 3
 			VISIBLE "Enter width: "
 			GIMMEH input
-			VISIBLE "Square Area: " PRODUCKT OF input AN input
+			VISIBLE "Square Area: " AN PRODUKT OF input AN input
 			GTFO
 		OMG 0
 			VISIBLE "Goodbye"
