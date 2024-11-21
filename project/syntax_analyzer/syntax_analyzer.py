@@ -1,7 +1,10 @@
-from lexer import lexical_analyzer
-from grammars import GRAMMARS
+from syntax_analyzer.lexical_analyzer import lexical_analyzer
+from syntax_analyzer.grammars import GRAMMARS
 
+unexpectedtoken = ""
 def parse(non_terminal, tokens, position):
+    global unexpectedtoken
+    
     for production in GRAMMARS[non_terminal]:
         current_position = position
         success = True
@@ -23,6 +26,8 @@ def parse(non_terminal, tokens, position):
                     current_position += 1
                 else:
                     success = False
+                    if current_position < len(tokens):
+                        unexpectedtoken = tokens[current_position][0]
                     break
 
         if success:
@@ -30,21 +35,13 @@ def parse(non_terminal, tokens, position):
 
     return False, position, None
 
-def main():
-    code = ""
-    with open("../../lolcode_test_cases/" + input(), 'r') as file:
-        code = file.read()
+def syntax_analyzer(code):
 
-    tokens = lexical_analyzer(str(code))
+    tokens = lexical_analyzer(code)
     
     result, final_position, parse_tree = parse("program", tokens, 0)
-    
-    print(parse_tree)
 
     if result and final_position == len(tokens):
-        print("Parsing succeeded!")
+        return str(parse_tree) + "\nParsing succeeded!"
     else:
-        print("Unexpected token:", tokens[final_position])
-
-if __name__ == "__main__":
-    main()
+        return str(parse_tree) + "\nUnexpected token: " + unexpectedtoken

@@ -6,7 +6,7 @@ REGEX_TOKENS = {
     'Identifier Seperator': r'^AN$', 
     
     # Comments
-    'Comment': r'^BTW$',
+    'Comment': r'^BTW\s.*$',
     'Multiline Comment Start': r'^OBTW$',
     'Multiline Comment End': r'^TLDR$',
     
@@ -65,6 +65,7 @@ REGEX_TOKENS = {
     'Switch Keyword': r'^WTF\?$',
     'Case Keyword': r'^OMG$',
     'Default Case Keyword': r'^OMGWTF$',
+    'Break Keyword': r'^GTFO$',
 
     # Loops
     'Loop Keyword': r'^IM IN YR$',
@@ -84,8 +85,6 @@ REGEX_TOKENS = {
     
     # Miscellaneous
     'Identifiers End Keyword': r'^MKAY$',
-    'Newline': r'\n+',
-    'Whitespace': r'^\s+',
 
     # Literals
     'Integer Literal': r'^(\-?(0+)|\-?[1-9][0-9]*)$',

@@ -1,4 +1,6 @@
 import tkinter as tk
+from tkinter import font
+from tkinter import scrolledtext
 from widgets.widget import Widget
 from widgets.ui_elements import create_styled_label, create_styled_button
 from lexical_analyzer.lexical_analyzer import lexical_analyzer
@@ -17,8 +19,6 @@ class Console(Widget):
         # Title and Buttons
         title = create_styled_label(self.header, "Console")
         title.pack(side=tk.LEFT)
-        parse_button = create_styled_button(self.header, "Parse", self.parse)
-        parse_button.pack(side=tk.RIGHT)
         run_button = create_styled_button(self.header, "Run", self.run)
         run_button.pack(side=tk.RIGHT)
         
@@ -36,14 +36,13 @@ class Console(Widget):
         self.text_area.config(state="disabled")
         self.text_area.pack(fill=tk.BOTH, side=tk.TOP, expand=True)
     
-    def parse(self):
-        self.text_area.config(state="normal")
-        self.text_area.delete("1.0", tk.END)
-        parse_tree = syntax_analyzer(self.text_editor.text_area.get("1.0", "end-1c"))
-        self.text_area.insert(tk.END, parse_tree)
-        self.text_area.config(state="disabled")
-    
     def run(self):
-        tokens = lexical_analyzer(self.text_editor.text_area.get("1.0", "end-1c"))
+        tokens = lexical_analyzer(self.text_editor.text_area.get("1.0", "end"))
+        print(tokens)
         self.tokens_table.update(tokens)
         # symbol table update
+        self.text_area.config(state="normal")
+        self.text_area.delete("1.0", tk.END)
+        parse_result = syntax_analyzer(self.text_editor.text_area.get("1.0", "end"))
+        self.text_area.insert(tk.END, parse_result)
+        self.text_area.config(state="disabled")

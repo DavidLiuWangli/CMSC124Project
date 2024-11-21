@@ -1,6 +1,0 @@
-HAI
-    WAZZUP
-        BTW what the hell
-        I HAS A variable
-    BUHBYE
-KTHXBYE
