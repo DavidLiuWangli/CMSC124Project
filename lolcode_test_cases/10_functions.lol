@@ -1,5 +1,5 @@
 HAI
-    WAZZ
+    WAZZUP
         I HAS A name
         I HAS A num1
         I HAS A num2
