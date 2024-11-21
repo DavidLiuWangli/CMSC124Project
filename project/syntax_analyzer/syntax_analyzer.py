@@ -2,8 +2,6 @@ from lexer import lexical_analyzer
 from grammars import GRAMMARS
 
 def parse(non_terminal, tokens, position):
-    global scanned_lexemes
-
     for production in GRAMMARS[non_terminal]:
         current_position = position
         success = True
