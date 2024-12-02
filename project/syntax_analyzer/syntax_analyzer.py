@@ -2,6 +2,7 @@ from syntax_analyzer.lexical_analyzer import lexical_analyzer
 from syntax_analyzer.grammars import GRAMMARS
 
 unexpectedtoken = ""
+
 def parse(non_terminal, tokens, position):
     global unexpectedtoken
     

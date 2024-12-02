@@ -182,10 +182,6 @@ GRAMMARS = {
         ['varident'],
         ['IT']
     ],
-    'control-body': [
-        ['statement'],
-        ['GTFO']
-    ],
     'condition-block': [
         ['expression', 'end-of-line', 'O RLY?', 'end-of-line', 'YA RLY', 'end-of-line', 'statements', 'else-if-chain', 'else-block', 'OIC', 'end-of-line']
     ],
