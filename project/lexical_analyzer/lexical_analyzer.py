@@ -70,8 +70,6 @@ def lexical_analyzer(code):
                     else:
                         for other in token.split():
                             expanded_words.append(other)
-        
-        print(expanded_words);
 
         i = 0
 
@@ -108,5 +106,4 @@ def lexical_analyzer(code):
         line_number += 1
         tokens.append(("\\n", "Linebreak"))
     
-    print(tokens)
     return tokens
