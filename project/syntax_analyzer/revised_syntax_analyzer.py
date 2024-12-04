@@ -1,7 +1,12 @@
+from pathlib import Path
+from lexical_analyzer import lexical_analyzer
+
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
         self.position = 0
+        self.depth = 0
+        print(tokens)
     
     def current_token(self):
         if self.position < len(self.tokens):
@@ -13,19 +18,27 @@ class Parser:
             self.position += 1
 
     def expect(self, token):
+        self.depth += 1
+        if self.depth == 2000:
+            raise Exception(f"Stop!")
+        # print(f"Current token: {self.current_token()}")
+        # print(f"Expecting: {token}")
+        self.last_expected = token
         if token == "":
             return True
         if self.current_token() and self.tokens[self.position][1] == token:
+            print(f"Successfully matched {self.current_token()} with {token}")
             self.next()
             return True
         else:
+            print(f"Unsuccessful match {self.current_token()} with {token}")
             self.unexpected_token = self.current_token()[0] if self.current_token() else "EOF"
-            raise Exception(f"Unexpected token: {self.unexpected_token}, expected: {token_type}")
             return False
 
     def program(self):
         if self.outsides() and self.expect("HAI") and self.end_of_line() and self.data_section() and self.statements() and self.expect("KTHXBYE") and self.end_of_line() and self.outsides():
             return True
+        raise Exception(f"Unexpected token: {self.unexpected_token}, expecting: {self.last_expected}")
 
     def outsides(self):
         if self.outside() and self.outsides():
@@ -35,16 +48,18 @@ class Parser:
     def outside(self):
         if self.comment():
             return True
-        if self.multi-line-comment():
+        if self.multi_line_comment():
             return True
         return False
     
     def statements(self):
+        print("Entered statmentS!")
         if self.statement() and self.statements():
             return True
         return self.expect("")
 
     def statement(self):
+        print("Entered statement!")
         if self.comment():
             return True
         if self.multi_line_comment():
@@ -53,19 +68,31 @@ class Parser:
             return True
         if self.output():
             return True
-        if self.re_casting():
+        if self.variable_identifier() and self.variable_starting_statement():
             return True
-        if self.variable_assignment():
-            return True
-        if self.condition_block():
+        if self.expect("IT") and self.variable_assignment():
             return True
         if self.switch_case_block():
+            return True
+        if self.condition_block():
             return True
         if self.loop_block():
             return True
         if self.function_call():
             return True
         if self.function():
+            return True
+        print("Exiting statement!")
+        return False
+
+    def variable_starting_statement(self):
+        print("Entered variable starting!")
+        if self.re_casting():
+            return True
+        if self.variable_assignment():
+            print("IS variable assignment!")
+            return True
+        if self.end_of_line() and self.switch_case_block():
             return True
         return False
 
@@ -137,12 +164,14 @@ class Parser:
         return False
 
     def input(self):
-        if self.expect("GIMMEH") and self.variable_reference() and self.end_of_line():
+        if self.expect("GIMMEH") and self.variable_identifier() and self.end_of_line():
+            return True
+        if self.expect("GIMMEH") and self.expect("IT") and self.end_of_line():
             return True
         return False
 
     def output(self):
-        if self.expect("VISIBLE") and self.operand() and self.output_operand() and self.end_of_line():
+        if self.expect("VISIBLE") and self.operand() and self.output_operands() and self.end_of_line():
             return True
         return False
 
@@ -211,6 +240,11 @@ class Parser:
         return False
 
     def comparison_expression(self):
+        if self.comparison_operator() and self.operand() and self.expect("AN") and self.operand():
+            return True
+        return False
+
+    def comparison_operator(self):
         if self.expect("BOTH SAEM"):
             return True
         if self.expect("DIFFRINT"):
@@ -222,9 +256,9 @@ class Parser:
         return False
 
     def inequality(self):
-        if self.expect("BIGGR") and self.operand() and self.expect("AN"):
+        if self.expect("BIGGR OF") and self.operand() and self.expect("AN"):
             return True
-        if self.expect("SMALLR") and self.operand() and self.expect("AN"):
+        if self.expect("SMALLR OF") and self.operand() and self.expect("AN"):
             return True
         return self.expect("")
 
@@ -300,24 +334,17 @@ class Parser:
         return self.expect("")
 
     def re_casting(self):
-        if self.variable_identifier() and self.expect("IS NOW A") and self.expect("type") and self.end_of_line():
+        if self.expect("IS NOW A") and self.expect("type") and self.end_of_line():
             return True
         return False
 
     def variable_assignment(self):
-        if self.variable_reference() and self.expect("R") and self.expect("value") and self.end_of_line():
-            return True
-        return False
-
-    def variable_reference(self):
-        if self.variable_identifier():
-            return True
-        if self.expect("IT"):
+        if self.expect("R") and self.value() and self.end_of_line():
             return True
         return False
 
     def condition_block(self):
-        if self.expression() and self.end_of_line() and self.expect("O RLY?") and self.end_of_line() and self.expect("YA RLY") and self.end_of_line() and self.statemnts() and self.else_if_chain() and self.else_block() and self.expect("OIC") and self.end_of_line():
+        if self.expression() and self.end_of_line() and self.expect("O RLY?") and self.end_of_line() and self.expect("YA RLY") and self.end_of_line() and self.statements() and self.else_if_chain() and self.else_block() and self.expect("OIC") and self.end_of_line():
             return True
         return False
 
@@ -337,9 +364,7 @@ class Parser:
         return self.expect("")
 
     def switch_case_block(self):
-        if self.variable_identifier() and self.end_of_line() and self.expect("WTF?") and self.end_of_line() and self.cases_chain() and self.default_case_block() and self.expect("OIC") and self.end_of_line():
-            return True
-        if self.expect("WTF?") and self.end_of_lie() and self.cases_chain() and self.default_case_block() and self.expect("OIC") and self.end_of_line():
+        if self.expect("WTF?") and self.end_of_line() and self.cases_chain() and self.default_case_block() and self.expect("OIC") and self.end_of_line():
             return True
         return False
 
@@ -385,14 +410,15 @@ class Parser:
         return False
 
     def function(self):
-        if self.expect("HOW I IZ") and self.function_identifier() and self.parameters() and self.end_of_line() and self.function_body() and self.expect("IF U SAY SO") and self.end_of_line():
+        print("Entered function!")
+        if self.expect("HOW IZ I") and self.function_identifier() and self.parameters() and self.end_of_line() and self.function_body() and self.expect("IF U SAY SO") and self.end_of_line():
             return True
         return False
 
     def function_call(self):
-        if self.expect("I IZ") and self.function_identifier() and self.extra_parameters():
+        if self.expect("I IZ") and self.function_identifier() and self.arguments() and self.expect("MKAY") and self.end_of_line():
             return True
-        return self.expect("")
+        return False
 
     def parameters(self):
         if self.expect("YR") and self.variable_identifier() and self.extra_parameters():
@@ -417,7 +443,7 @@ class Parser:
     def return_function(self):
         if self.expect("FOUND YR") and self.value() and self.end_of_line():
             return True
-        if self.expect("GTFO") and self.end_of_Line():
+        if self.expect("GTFO") and self.end_of_line():
             return True
         return False
 
@@ -440,6 +466,11 @@ class Parser:
             return True
         return self.expect("")
 
+    def variable_identifier(self):
+        if self.expect("varident"):
+            return True
+        return False
+
     def function_identifier(self):
         if self.expect("varident"):
             return True
@@ -450,8 +481,23 @@ class Parser:
             return True
         return False
 
-def main():
-    pass
+def syntax_analyzer(tokens):
+    parser = Parser(tokens)
+    if parser.program():
+        print("Correct syntax")
+    else:
+        print("Incorrect syntax")
 
+filename = "10_functions.lol"
+
+def main():
+    test_cases_folder = Path("../../lolcode_test_cases")
+    for file_path in test_cases_folder.glob("*.lol"):  # Adjust the pattern if needed
+        filename = file_path.name
+        print(f"Processing file: {filename}")
+        with open(file_path, "r") as file:
+            code = file.read()
+        tokens = lexical_analyzer(code)  # Call your lexical analyzer
+        syntax_analyzer(tokens)  
 if __name__ == "__main__":
     main()

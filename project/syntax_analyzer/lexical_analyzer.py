@@ -1,4 +1,4 @@
-from syntax_analyzer.parser_tokens import REGEX_TOKENS
+from parser_tokens import REGEX_TOKENS
 import re
 
 def lexical_analyzer(code):
