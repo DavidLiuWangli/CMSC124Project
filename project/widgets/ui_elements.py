@@ -5,10 +5,10 @@ def create_styled_label(parent, text):
         parent,
         text=text,
         fg="white",
-        font=("Consolas", 14),
+        font=("Consolas", 12),
         bg="black",
-        padx=2,
-        pady=2
+        padx=4,
+        pady=4
     )
 
 def create_styled_button(parent, text, function):
