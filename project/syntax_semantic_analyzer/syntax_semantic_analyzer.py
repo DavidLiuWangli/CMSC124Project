@@ -1,15 +1,17 @@
-from parser_tokens import REGEX_TOKENS
 import re
 from pathlib import Path
-from lexical_analyzer import lexical_analyzer
+from syntax_semantic_analyzer.parser_tokens import REGEX_TOKENS
+from syntax_semantic_analyzer.lexical_analyzer import lexical_analyzer
 
 class SyntaxSemanticAnalyzer:
-    def __init__(self, tokens):
-        # print(tokens)
-        self.tokens = tokens
+    def __init__(self, code, console, file_name):
+        self.tokens = lexical_analyzer(code)
         self.position = 0
-        self.depth = 0
         self.symbol_table = {}
+        self.code = code
+        self.console = console
+        self.file_name = file_name
+        self.program()
 
     def previous_type(self, index=-1):
         if 0 <= self.position + index and self.position + index < len(self.tokens):
@@ -46,8 +48,17 @@ class SyntaxSemanticAnalyzer:
 
     def program(self):
         if self.outsides() and self.expect("HAI") and self.end_of_line() and self.data_section() and self.statements() and self.expect("KTHXBYE") and self.end_of_line() and self.outsides():
-            return True
-        raise Exception(f"Unexpected token: {self.unexpected_token}, expecting: {self.last_expected}")
+            self.console.update_table(self.symbol_table)
+            self.console.log(f"Completed {self.file_name}")
+            return
+        line_number = 0
+        lines = self.code.split('\n')
+        for number, line in enumerate(lines, start=1):
+            if self.unexpected_token in line:
+                line_number = number
+                break
+        self.console.update_table(self.symbol_table)
+        self.console.log(f"{self.file_name}:{line_number} Unexpected token: {self.unexpected_token}")
 
     def outsides(self):
         if self.outside() and self.outsides():
@@ -200,10 +211,10 @@ class SyntaxSemanticAnalyzer:
         if self.expect("GIMMEH") and self.variable_identifier():
             self.current_variable = self.previous_token()
             if self.end_of_line():
-                self.symbol_table[self.current_variable] = input()
+                self.symbol_table[self.current_variable] = self.console.get_input(self.symbol_table)
                 return True
         if self.expect("GIMMEH") and self.expect("IT") and self.end_of_line():
-            self.symbol_table["IT"] = input()
+            self.symbol_table["IT"] = self.console.get_input(self.symbol_table)
             return True
         return False
 
@@ -217,7 +228,7 @@ class SyntaxSemanticAnalyzer:
             else:
                 self.current_output_string = str(self.current_operand) 
             if self.output_operands() and self.end_of_line():
-                print(self.current_output_string)
+                self.console.log(self.current_output_string)
                 return True
         return False
 
@@ -283,7 +294,9 @@ class SyntaxSemanticAnalyzer:
                         elif re.match(REGEX_TOKENS["numbar"], operand_1):
                             operand_1 = float(operand_1)
                         else:
-                            raise Exception(f"Cannot typecast {operand_1} to NUMBR or NUMBAR")
+                            message = f"Cannot typecast {operand_1} to NUMBR or NUMBAR"
+                            self.console.log(message)
+                            raise Exception(message)
 
                     if type_2 not in ["numbr", "numbar"]:
                         if type_2 == "troof":
@@ -293,7 +306,9 @@ class SyntaxSemanticAnalyzer:
                         elif re.match(REGEX_TOKENS["numbar"], operand_2):
                             operand_2 = float(operand_2)
                         else:
-                            raise Exception(f"Cannot typecast {operand_2} to NUMBR or NUMBAR")
+                            message = f"Cannot typecast {operand_2} to NUMBR or NUMBAR"
+                            self.console.log(message)
+                            raise Exception(message)
 
                     if operator == "SUM OF":
                         self.current_math_expression = operand_1 + operand_2
@@ -391,7 +406,7 @@ class SyntaxSemanticAnalyzer:
                 if self.expect("AN") and self.operand():
                     operand_2 = self.current_operand
                     
-                    print(f"Comparing {operand_1} and {operand_2}")
+                    # print(f"Comparing {operand_1} and {operand_2}")
 
                     if current_operator == "BOTH SAEM":
                         self.current_comparison_expression = (operand_1 == operand_2)
@@ -512,7 +527,9 @@ class SyntaxSemanticAnalyzer:
                         elif re.match(REGEX_TOKENS["numbar"], operand_1):
                             operand_1 = float(operand_1)
                         else:
-                            raise Exception(f"Operand {operand_1} cannot be implicitly casted to NUMBR or NUMBAR")
+                            message = f"Operand {operand_1} cannot be implicitly casted to NUMBR or NUMBAR"
+                            self.console.log(message)
+                            raise Exception(message)
 
                     if type_2 not in ["numbr", "numbar"]:
                         if type_2 == "troof":
@@ -522,7 +539,9 @@ class SyntaxSemanticAnalyzer:
                         elif re.match(REGEX_TOKENS["numbar"], operand_2):
                             operand_2 = float(operand_2)
                         else:
-                            raise Exception(f"Operand {operand_2} cannot be implicitly casted to NUMBR or NUMBAR")
+                            message = f"Operand {operand_2} cannot be implicitly casted to NUMBR or NUMBAR"
+                            self.console.log(message)
+                            raise Exception(message)
 
                     if operator == "SUM OF":
                         self.current_all_any_math = operand_1 + operand_2
@@ -785,44 +804,6 @@ class SyntaxSemanticAnalyzer:
         if self.expect("varident"):
             return True
         return False
-
-def DEBUG_SYMBOL_TABLE(symbol_table):
-    print("\n\n\n------------SYMBOL TABLE-------------")
-    for key, value in symbol_table.items():
-        if type(value) == bool:
-            if value:
-                value = "WIN"
-            else:
-                value = "FAIL"
-        print(f"{key}\t\t\t{value}")
-    print("------------SYMBOL TABLE-------------\n\n\n")
     
-
-def syntax_semantic_analyzer(tokens):
-    analyzer = SyntaxSemanticAnalyzer(tokens)
-    correct_program = analyzer.program()
-    DEBUG_SYMBOL_TABLE(analyzer.symbol_table)
-    return correct_program
-
-def main():
-    testcase = int(input())
-    passed_all_test_cases = True
-    test_cases_folder = Path("../../lolcode_test_cases")
-    for file_path in sorted(test_cases_folder.glob("*.lol")):  # Adjust the pattern if needed
-        filename = file_path.name
-        if int(filename[0:2]) != testcase:
-            continue
-        print(f"Processing file: {filename}")
-        with open(file_path, "r") as file:
-            code = file.read()
-        print(code)
-        tokens = lexical_analyzer(code)  # Call your lexical analyzer
-        if not syntax_semantic_analyzer(tokens):
-            passed_all_test_cases = False
-            print(f"Failed at testcase: {filename}")
-            break
-    # if passed_all_test_cases:
-        # print("Passed all test cases.")
-
-if __name__ == "__main__":
-    main()
+def syntax_semantic_analyzer(code, console, file_name):
+    SyntaxSemanticAnalyzer(code, console, file_name)
