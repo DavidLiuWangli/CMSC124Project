@@ -10,12 +10,27 @@ class Entries_Table(Widget):
     def create_table(self, title, columns):
         tokens_list_title = create_styled_label(self.header, title)
         tokens_list_title.pack(side=tk.TOP)
+        
+        style = ttk.Style()
+        style = ttk.Style()
+        style.configure("Treeview.Heading", 
+                        font=("Consolas", 12), 
+                        )
+        style.configure("Treeview", 
+                        foreground="white",  
+                        background="black", 
+                        fieldbackground="black",
+                        font=("Consolas", 12), 
+                        )
+
         self.table = ttk.Treeview(self.content, columns=columns, show="headings")
         for col in columns:
             self.table.heading(col, text=col)
-        for row in self.table.get_children():
-            row
-        self.table.pack(fill=tk.BOTH, expand=True)
+        self.table.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        
+        scrollbar = tk.Scrollbar(self.content, command=self.table.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.table.config(yscrollcommand=scrollbar.set)
     
     def update(self, entries):
         for row in self.table.get_children():

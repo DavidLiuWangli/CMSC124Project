@@ -21,6 +21,8 @@ class Console(Widget):
         title.pack(side=tk.LEFT)
         run_button = create_styled_button(self.header, "Run", self.run)
         run_button.pack(side=tk.RIGHT)
+        clear_button = create_styled_button(self.header, "Clear", self.clear)
+        clear_button.pack(side=tk.RIGHT)
         
         # Console Output
         self.text_area = scrolledtext.ScrolledText(
@@ -37,32 +39,44 @@ class Console(Widget):
         self.text_area.pack(fill=tk.BOTH, side=tk.TOP, expand=True)
         self.text_area.config(wrap="word")
     
+    def log(self, text=""):
+        self.text_area.config(state="normal")
+        self.text_area.insert(tk.END, f"{text}\n")
+        self.text_area.mark_set("insert", "end")
+        self.text_area.see("insert")
+        self.text_area.config(state="disabled")
+    
     def run(self):
-        tokens = lexical_analyzer(self.text_editor.text_area.get("1.0", "end"))
+        code = self.text_editor.text_area.get("1.0", "end")
+        file_name = self.text_editor.get_file_name()
+        self.log(f"Compiling {file_name}")
+        
+        tokens = lexical_analyzer(code)
         self.tokens_table.update(tokens)
-        # symbol table update
+        
+        parser = syntax_analyzer(code)
+        if (parser == ""):
+            self.log(f"Running {file_name}")
+        else:
+            self.log(f"{parser} in {file_name}")
+            return
+            
+        #semantics
+        
+        self.log(f"Completed {file_name}")
+    
+    def clear(self):
         self.text_area.config(state="normal")
         self.text_area.delete("1.0", tk.END)
-        parse_result = syntax_analyzer(self.text_editor.text_area.get("1.0", "end"))
-        self.text_area.insert(tk.END, parse_result)
         self.text_area.config(state="disabled")
     
     async def get_input(self):
-        self.text_area.config(state="normal")
+        self.console_input = None
         self.text_area.bind("<Return>", on_enter)
-        
-        self.text_area.mark_set("insert", "end")
-        await listen()
-        
-        self.text_area.unbind("<Return>")
-        self.text_area.config(state="disabled")
-        
-        return self.console_input
-        
-    async def listen(self):
         while self.console_input == None:
-            self.update()
             await asyncio.sleep(0.01)
+        self.text_area.unbind("<Return>")
+        return self.console_input
             
     def on_enter(self):
         self.console_input = self.text_area.get("end-2l linestart", "end-1c").strip()

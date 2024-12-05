@@ -1,7 +1,6 @@
 import tkinter as tk
-from abc import ABC
 
-class Widget(ABC):
+class Widget(tk.Tk):
     def __init__(self, root):
         self.root = root
         self.border = tk.Frame(self.root, bg="white")
