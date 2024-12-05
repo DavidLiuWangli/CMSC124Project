@@ -10,7 +10,12 @@ class SyntaxSemanticAnalyzer:
         self.position = 0
         self.depth = 0
         self.symbol_table = {}
-   
+
+    def previous_type(self, index=-1):
+        if 0 <= self.position + index and self.position + index < len(self.tokens):
+            return self.tokens[self.position + index][1]
+        return None
+
     def previous_token(self, index=-1):
         if 0 <= self.position + index and self.position + index < len(self.tokens):
             return self.tokens[self.position + index][0]
@@ -126,7 +131,7 @@ class SyntaxSemanticAnalyzer:
         if self.expect("I HAS A") and self.variable_identifier():
             current_variable = self.previous_token()
             if self.initialization():
-                self.symbol_table[current_variable] = self.current_assign_value
+                self.symbol_table[current_variable] = self.current_value
                 if self.end_of_line() and self.declarations():
                     # print(self.current_variable, self.current_assign_value)
                     return True
@@ -137,47 +142,57 @@ class SyntaxSemanticAnalyzer:
     def initialization(self):
         if self.expect("ITZ") and self.value():
             return True
-        self.current_assign_value = None
+        self.current_value = None
         return self.expect("")
 
     def value(self):
         if self.literal():
+            self.current_value = self.current_literal
             return True
         if self.expression():
+            self.current_value = self.current_expression
             return True
         if self.variable_identifier():
+            self.current_value = self.symbol_table[self.current_variable]
             return True
         return False
 
     def literal(self):
         if self.expect("numbr"):
-            self.current_assign_value = int(self.previous_token())
+            self.current_literal = int(self.previous_token())
             return True
         if self.expect("numbar"):
-            self.current_assign_value = float(self.previous_token())
+            self.current_literal = float(self.previous_token())
             return True
         if self.expect("yarn"):
-            self.current_assign_value = str(self.previous_token()[1:-1])
+            self.current_literal = str(self.previous_token()[1:-1])
             return True
         if self.expect("troof"):
-            self.current_assign_value = bool(self.previous_token())
+            if self.previous_token() == "WIN":
+                self.current_literal = True
+            else:
+                self.current_literal = False
             return True
         return False
 
     def expression(self):
         if self.math_expression():
-            self.current_assign_value = self.current_result
+            self.current_expression = self.current_math_expression
             return True
         if self.concatenation():
-            self.current_assign_value = self.current_result
+            self.current_expression = self.current_concatenation
             return True
         if self.boolean_expression():
+            self.current_expression = self.current_boolean_expression
             return True
         if self.comparison_expression():
+            self.current_expression = self.current_comparison_expression
             return True
         if self.all_any_expression():
+            self.current_expression = self.current_all_any_expression
             return True
         if self.typecasting():
+            self.current_expression = self.current_typecasting
             return True
         return False
 
@@ -194,52 +209,56 @@ class SyntaxSemanticAnalyzer:
 
     def output(self):
         if self.expect("VISIBLE") and self.operand():
-            self.current_output_string = str(self.current_operand)
+            if type(self.current_operand) == bool:
+                if self.current_operand:
+                    self.current_output_string = "WIN"
+                else:
+                    self.current_output_string = "FAIL"
+            else:
+                self.current_output_string = str(self.current_operand) 
             if self.output_operands() and self.end_of_line():
                 print(self.current_output_string)
                 return True
         return False
 
     def output_operands(self):
-        if self.expect("+") and self.operand(): 
-            self.current_output_string += str(self.current_operand)
-            if self.output_operands():
-                return True
-        if self.expect("AN") and self.operand():
-            self.current_output_string += str(self.current_operand)
+        if self.expect("+") and self.operand():
+            if type(self.current_operand) == bool:
+                if self.current_operand:
+                    self.current_output_string += "WIN"
+                else:
+                    self.current_output_string += "FAIL"
+            else:
+                self.current_output_string += str(self.current_operand)
             if self.output_operands():
                 return True
         return self.expect("")
 
     def set_current_type(self):
-        if type(self.current_operand) == type(0):
-            # print("I'm a numbr!")
+        if type(self.current_operand) == int:
             self.current_type = "numbr"
-        elif type(self.current_operand) == type(1.0):
-            # print("I'm a numbar!")
+        elif type(self.current_operand) == float:
             self.current_type = "numbar"
-        elif type(self.current_operand) == type(True):
-            # print("I'm a troof!")
-            self.current_type = "troof"
-        elif type(self.current_operand) == type(""):
-            # print("I'm a yarn!")
+        elif type(self.current_operand) == str:
             self.current_type = "yarn"
+        elif type(self.current_operand) == bool:
+            self.current_type = "troof"
 
     def operand(self):
         if self.variable_identifier():
             self.current_operand = self.symbol_table[self.previous_token()]
-            self.set_current_type()
+            self.set_current_type() 
             return True
         if self.literal():
-            self.current_operand = self.current_assign_value 
-            self.set_current_type()
+            self.current_operand = self.current_literal 
+            self.set_current_type() 
             return True
         if self.expect("IT"):
             self.current_oeprand = self.symbol_table["IT"]
             self.set_current_type()
             return True
         if self.expression():
-            self.current_operand = self.current_result
+            self.current_operand = self.current_expression
             self.set_current_type()
             return True
         return False
@@ -253,38 +272,47 @@ class SyntaxSemanticAnalyzer:
                 if self.expect("AN") and self.operand():
                     operand_2 = self.current_operand
                     type_2 = self.current_type
-                    if type_1 not in ["numbr", "numbar"] and type_2 not in ["numbr", "numbar"]:
-                        if re.match(operand_1, REGEX_TOKENS["numbr"]):
-                            operand_1 = int(operand_1)
-                        elif re.match(operand_1, REGEX_TOKENS["numbar"]):
-                            operand_1 = float(operand_1)
-                        elif re.match(operand_1, REGEX_TOKENS["troof"]):
-                            operand_1 = int(operand_1)
-                        else:
-                            raise Exception("Cannot typecast to NUMBR or NUMBAR")
 
-                        if re.match(operand_2, REGEX_TOKENS["numbr"]):
-                            operand_2 = int(operand_2)
-                        elif re.match(operand_2, REGEX_TOKENS["numbar"]):
-                            operand_2 = float(operand_2)
-                        elif re.match(operand_2, REGEX_TOKENS["troof"]):
-                            operand_2 = int(operand_2)
+                    # print(f"Operand 1: {operand_1} {type_1}, Operand 2: {operand_2} {type_2}")
+
+                    if type_1 not in ["numbr", "numbar"]:
+                        if type_1 == "troof":
+                            operand_1 = int(operand_1)
+                        elif re.match(REGEX_TOKENS["numbr"], operand_1):
+                            operand_1 = int(operand_1)
+                        elif re.match(REGEX_TOKENS["numbar"], operand_1):
+                            operand_1 = float(operand_1)
                         else:
-                            raise Exception("Cannot typecast to NUMBR or NUMBAR")
+                            raise Exception(f"Cannot typecast {operand_1} to NUMBR or NUMBAR")
+
+                    if type_2 not in ["numbr", "numbar"]:
+                        if type_2 == "troof":
+                            operand_2 = int(operand_2)
+                        if re.match(REGEX_TOKENS["numbr"], operand_2):
+                            operand_2 = int(operand_2)
+                        elif re.match(REGEX_TOKENS["numbar"], operand_2):
+                            operand_2 = float(operand_2)
+                        else:
+                            raise Exception(f"Cannot typecast {operand_2} to NUMBR or NUMBAR")
 
                     if operator == "SUM OF":
-                        self.current_result = operand_1 + operand_2
+                        self.current_math_expression = operand_1 + operand_2
                     elif operator == "DIFF OF":
-                        self.current_result = operand_1 - operand_2
+                        self.current_math_expression = operand_1 - operand_2
                     elif operator == "PRODUKT OF":
-                        self.current_result = operand_1 * operand_2
+                        self.current_math_expression = operand_1 * operand_2
                     elif operator == "QUOSHUNT OF":
-                        if type_1 == "numbr" and type_2 == "numbr":
-                            self.current_result = operand_1 // operand_2
+                        if type(operand_1) == int and type(operand_1) == int:
+                            self.current_math_expression = operand_1 // operand_2
                         else:
-                            self.current_result = operand_1 / operand_2
+                            self.current_math_expression = operand_1 / operand_2
                     elif operator == "MOD OF":
-                        self.current_result = operand_1 % operand_2
+                        self.current_math_expression = operand_1 % operand_2
+                    elif operator == "BIGGR OF":
+                        self.current_math_expression = max(operand_1, operand_2)
+                    elif operator == "SMALLR OF":
+                        self.current_math_expression = min(operand_1, operand_2)
+
                     return True
         return False
 
@@ -299,27 +327,35 @@ class SyntaxSemanticAnalyzer:
             return True
         if self.expect("MOD OF"):
             return True
-        return False
-
-    def concatenation(self):
-        if self.expect("SMOOSH") and self.operand():
-            self.current_concatenation_operands = str(self.current_operand)
-            if self.concatenation_operands():
-                return True
-        return False
-
-    def concatenation_operands(self):
-        if self.expect("AN") and self.operand():
-            self.current_concatenation_operands += str(self.current_operand)
-            if self.concatenation_operands():
-                return True
-        return self.expect("")
+        if self.expect("BIGGR OF"):
+            return True
+        if self.expect("SMALLR OF"):
+            return True
+        return False 
 
     def boolean_expression(self):
-        if self.boolean_operator() and self.operand() and self.expect("AN") and self.operand():
-            return True
+        if self.boolean_operator():
+            operator = self.previous_token()
+            
+            if self.operand():
+                operand_1 = bool(self.current_operand)
+            
+                if self.expect("AN") and self.operand():
+                    operand_2 = bool(self.current_operand)
+                    
+                    if operator == "BOTH OF":
+                        self.current_boolean_expression = operand_1 and operand_2
+                    elif operator == "EITHER OF":
+                        self.current_boolean_expression = operand_1 or operand_2
+                    elif operator == "WON OF":
+                        self.current_boolean_expression = operand_1 ^ operand_2
+
+                    return True
+        
         if self.expect("NOT") and self.operand():
+            self.current_boolean_expression = not bool(self.current_operand)
             return True
+        
         return False
 
     def boolean_operator(self):
@@ -331,21 +367,37 @@ class SyntaxSemanticAnalyzer:
             return True
         return False
 
+    def concatenation(self):
+        if self.expect("SMOOSH") and self.operand():
+            self.current_concatenation = str(self.current_operand)
+            if self.concatenation_operands():
+                return True
+        return False
+
+    def concatenation_operands(self):
+        if self.expect("AN") and self.operand():
+            self.current_concatenation += str(self.current_operand)
+            if self.concatenation_operands():
+                return True
+        return self.expect("")
+
     def comparison_expression(self):
         if self.comparison_operator():
             current_operator = self.previous_token()
+
             if self.operand():
                 operand_1 = self.current_operand
+
                 if self.expect("AN") and self.operand():
                     operand_2 = self.current_operand
+                    
+                    print(f"Comparing {operand_1} and {operand_2}")
+
                     if current_operator == "BOTH SAEM":
-                        self.current_result = operand_1 == operand_2
+                        self.current_comparison_expression = (operand_1 == operand_2)
                     elif current_operator == "DIFFRINT":
-                        self.current_result = operand_1 != operand_2
-                    elif current_operator == "BIGGR OF":
-                        self.current_result = max(operand_1, operand_2)
-                    elif current_operator == "SMALLR OF":
-                        self.current_reuslt = min(operand_1, operand_2)
+                        self.current_comparison_expression = (operand_1 != operand_2)
+                    
                     return True
         return False
 
@@ -354,82 +406,215 @@ class SyntaxSemanticAnalyzer:
             return True
         if self.expect("DIFFRINT"):
             return True
-        if self.expect("BIGGR OF"):
-            return True
-        if self.expect("SMALLR OF"):
-            return True
         return False
 
-    def inequality(self):
-        if self.expect("BIGGR OF") and self.operand() and self.expect("AN"):
-            return True
-        if self.expect("SMALLR OF") and self.operand() and self.expect("AN"):
-            return True
-        return self.expect("")
-
     def all_any_expression(self):
-        if self.all_any_operator() and self.all_any_operand() and self.all_any_operands() and self.expect("MKAY"):
-            return True
+        if self.all_any_operator():
+
+            if self.current_all_any_operator == "ALL OF":
+                self.current_all_any_expression = True
+            elif self.current_all_any_operator == "ANY OF":
+                self.current_all_any_expression = False
+
+            if self.all_any_operand():
+                operand = bool(self.current_all_any_operand)
+
+                if self.current_all_any_operator == "ALL OF":
+                    self.current_all_any_expression = self.current_all_any_expression and operand
+                elif self.current_all_any_operator == "ANY OF":
+                    self.current_all_any_expression = self.current_all_any_expression or operand
+
+                if self.all_any_operands() and self.expect("MKAY"):
+                    return True
         return False
 
     def all_any_operator(self):
         if self.expect("ALL OF"):
+            self.current_all_any_operator = "ALL OF"
             return True
         if self.expect("ANY OF"):
+            self.current_all_any_operator = "ANY OF"
             return True
         return False
     
     def all_any_operands(self):
-        if self.expect("AN") and self.all_any_operand() and self.all_any_operands():
-            return True
+        if self.expect("AN") and self.all_any_operand():
+            operand = bool(self.current_all_any_operand)
+
+            if self.current_all_any_operator == "ALL OF":
+                self.current_all_any_expression = self.current_all_any_expression and operand
+            elif self.current_all_any_operator == "ANY OF":
+                self.current_all_any_expression = self.current_all_any_expression or operand
+
+            if self.all_any_operands():
+                return True
+
         return self.expect("")
+
+    def set_current_all_any_type(self):
+        if type(self.current_all_any_operand) == int:
+            self.current_all_any_type = "numbr"
+        elif type(self.current_all_any_operand) == float:
+            self.current_all_any_type = "numbar"
+        elif type(self.current_all_any_operand) == str:
+            self.current_all_any_type = "yarn"
+        elif type(self.current_all_any_operand) == bool:
+            self.current_all_any_type = "troof"
 
     def all_any_operand(self):
         if self.variable_identifier():
+            self.current_all_any_operand = self.symbol_table[self.current_variable]
+            self.set_current_all_any_type()
             return True
         if self.literal():
+            self.current_all_any_operand = self.current_literal
+            self.set_current_all_any_type()
             return True
         if self.expect("IT"):
+            self.current_all_any_operand = self.symbol_table["IT"]
+            self.set_current_all_any_type()
             return True
         if self.all_any_math():
+            self.current_all_any_operand = self.current_all_any_math
+            self.set_current_all_any_type()
             return True
         if self.all_any_boolean():
+            self.current_all_any_operand = self.current_all_any_boolean
+            self.set_current_all_any_type()
             return True
         if self.all_any_concatenation():
+            self.current_all_any_operand = self.current_all_any_concatenation
+            self.set_current_all_any_type()
             return True
         if self.all_any_comparison():
+            self.current_all_any_operand = self.current_all_any_comparison
+            self.set_current_all_any_type()
             return True
         return False
 
     def all_any_math(self):
-        if self.math_operator() and self.all_any_operand() and self.expect("AN") and self.all_any_operand():
-            return True
+        if self.math_operator():
+            operator = self.previous_token()
+
+            if self.all_any_operand():
+                operand_1 = self.current_all_any_operand
+                type_1 = self.current_all_any_type
+
+                if self.expect("AN") and self.all_any_operand():
+                    operand_2 = self.current_all_any_operand
+                    type_2 = self.current_all_any_type
+
+                    if type_1 not in ["numbr", "numbar"]:
+                        if type_1 == "troof":
+                            operand_1 = int(operand_1)
+                        elif re.match(REGEX_TOKENS["numbr"], operand_1):
+                            operand_1 = int(operand_1)
+                        elif re.match(REGEX_TOKENS["numbar"], operand_1):
+                            operand_1 = float(operand_1)
+                        else:
+                            raise Exception(f"Operand {operand_1} cannot be implicitly casted to NUMBR or NUMBAR")
+
+                    if type_2 not in ["numbr", "numbar"]:
+                        if type_2 == "troof":
+                            operand_2 = int(operand_2)
+                        elif re.match(REGEX_TOKENS["numbr"], operand_2):
+                            operand_2 = int(operand_2)
+                        elif re.match(REGEX_TOKENS["numbar"], operand_2):
+                            operand_2 = float(operand_2)
+                        else:
+                            raise Exception(f"Operand {operand_2} cannot be implicitly casted to NUMBR or NUMBAR")
+
+                    if operator == "SUM OF":
+                        self.current_all_any_math = operand_1 + operand_2
+                    elif operator == "DIFF OF":
+                        self.current_all_any_math = operand_1 - operand_2
+                    elif operator == "PRODUKT OF":
+                        self.current_all_any_math = operand_1 * operand_2
+                    elif operator == "QUOSHUNT OF":
+                        if type(operand_1) == int and type(operand_2) == int:
+                            self.current_all_any_math = operand_1 // operand_2
+                        else:
+                            self.current_all_any_math = operand_1 / operand_2
+                    elif operator == "MOD OF":
+                        self.current_all_any_math = operand_1 % operand_2
+                    elif operator == "BIGGR OF":
+                        self.current_all_any_math = max(operand_1, operand_2)
+                    elif operator == "SMALLR OF":
+                        self.current_all_any_math = min(operand_1, operand_2)
+
+                    return True
         return False
 
     def all_any_boolean(self):
-        if self.boolean_operator() and self.all_any_operand() and self.expect("AN") and self.all_any_operand():
-            return True
+        if self.boolean_operator():
+            operator = self.previous_token()
+            
+            if self.all_any_operand():
+                operand_1 = bool(self.current_all_any_operand)
+            
+                if self.expect("AN") and self.all_any_operand():
+                    operand_2 = bool(self.current_all_any_operand)
+                    
+                    if operator == "BOTH OF":
+                        self.current_all_any_boolean = operand_1 and operand_2
+                    elif operator == "EITHER OF":
+                        self.current_all_any_boolean = operand_1 or operand_2
+                    elif operator == "WON OF":
+                        self.current_all_any_boolean = operand_1 ^ operand_2
+
+                    return True
+        
         if self.expect("NOT") and self.all_any_operand():
+            self.current_all_any_boolean = not bool(self.current_all_any_operand)
             return True
+
         return False
 
     def all_any_concatenation(self):
-        if self.expect("SMOOSH") and self.all_any_operand() and self.all_any_concatenation_operands():
-            return True
+        if self.expect("SMOOSH") and self.all_any_operand():
+            self.current_all_any_concatenation = str(self.current_all_any_operand)
+            if self.all_any_concatenation_operands():
+                return True
         return False
 
     def all_any_concatenation_operands(self):
-        if self.expect("AN") and self.all_any_operand() and self.all_any_concatenation_operands():
-            return True
+        if self.expect("AN") and self.all_any_operand():
+            self.current_all_any_concatenation += str(self.current_all_any_operand)
+            if self.all_any_concatenation_operands():
+                return True
         return self.expect("")
 
     def all_any_comparison(self):
-        if self.comparison_operator() and self.all_any_operand() and self.expect("AN") and self.inequality() and self.all_any_operand():
-            return True
+        if self.comparison_operator():
+            current_operator = self.previous_token()
+            
+            if self.all_any_operand():
+                operand_1 = self.current_all_any_operand
+
+                if self.expect("AN") and self.all_any_operand():
+                    operand_2 = self.current_all_any_operand
+
+                    if current_operator == "BOTH SAEM":
+                        self.all_any_comparison = operand_1 == operand_2
+                    elif current_operator == "DIFFRINT":
+                        self.all_any_comparison = operand_1 != operand_2
+                    
+                    return True
         return False
 
     def typecasting(self):
         if self.expect("MAEK") and self.variable_identifier() and self.typecasting_separator() and self.expect("type"):
+            self.current_type_literal = self.previous_token()
+
+            if self.current_type_literal == "TROOF":
+                self.current_typecasting = bool(self.symbol_table[self.current_variable])
+            elif self.current_type_literal == "NUMBAR":
+                self.current_typecasting = float(self.symbol_table[self.current_variable])
+            elif self.current_type_literal == "NUMBR":
+                self.current_typecasting = int(self.symbol_table[self.current_variable])
+            elif self.current_type_literal == "YARN":
+                self.current_typecasting = str(self.symbol_table[self.current_variable])
+
             return True
         return False
 
@@ -439,13 +624,25 @@ class SyntaxSemanticAnalyzer:
         return self.expect("")
 
     def re_casting(self):
-        if self.expect("IS NOW A") and self.expect("type") and self.end_of_line():
-            return True
+        if self.expect("IS NOW A") and self.expect("type"):
+            self.current_type_literal = self.previous_token()
+            
+            if self.current_type_literal == "TROOF":
+                self.symbol_table[self.current_variable] = bool(self.symbol_table[self.current_variable])
+            elif self.current_type_literal == "NUMBAR":
+                self.symbol_table[self.current_variable] = float(self.symbol_table[self.current_variable])
+            elif self.current_type_literal == "NUMBR":
+                self.symbol_table[self.current_variable] = int(self.symbol_table[self.current_variable])
+            elif self.current_type_literal == "YARN":
+                self.symbol_table[self.current_variable] = str(self.symbol_table[self.current_variable])
+
+            if self.end_of_line():
+                return True
         return False
 
     def variable_assignment(self):
         if self.expect("R") and self.value():
-            self.symbol_table[self.current_variable] = self.current_assign_value 
+            self.symbol_table[self.current_variable] = self.current_value 
             if self.end_of_line():
                 return True
             return True
@@ -592,6 +789,11 @@ class SyntaxSemanticAnalyzer:
 def DEBUG_SYMBOL_TABLE(symbol_table):
     print("\n\n\n------------SYMBOL TABLE-------------")
     for key, value in symbol_table.items():
+        if type(value) == bool:
+            if value:
+                value = "WIN"
+            else:
+                value = "FAIL"
         print(f"{key}\t\t\t{value}")
     print("------------SYMBOL TABLE-------------\n\n\n")
     
@@ -603,10 +805,13 @@ def syntax_semantic_analyzer(tokens):
     return correct_program
 
 def main():
+    testcase = int(input())
     passed_all_test_cases = True
     test_cases_folder = Path("../../lolcode_test_cases")
     for file_path in sorted(test_cases_folder.glob("*.lol")):  # Adjust the pattern if needed
         filename = file_path.name
+        if int(filename[0:2]) != testcase:
+            continue
         print(f"Processing file: {filename}")
         with open(file_path, "r") as file:
             code = file.read()
@@ -616,7 +821,8 @@ def main():
             passed_all_test_cases = False
             print(f"Failed at testcase: {filename}")
             break
-    if passed_all_test_cases:
-        print("Passed all test cases.")
+    # if passed_all_test_cases:
+        # print("Passed all test cases.")
+
 if __name__ == "__main__":
     main()

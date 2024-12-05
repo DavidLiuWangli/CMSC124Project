@@ -22,7 +22,7 @@ def parse(non_terminal, tokens, position):
                 continue
             else:
                 if current_position < len(tokens) and tokens[current_position][1] == symbol:
-                    # print(current_position, symbol, GRAMMARS[non_terminal])
+                    print(current_position, symbol, GRAMMARS[non_terminal])
                     subtree.append(tokens[current_position])
                     current_position += 1
                 else:

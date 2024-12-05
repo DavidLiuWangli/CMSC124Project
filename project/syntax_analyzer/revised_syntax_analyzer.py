@@ -3,10 +3,10 @@ from lexical_analyzer import lexical_analyzer
 
 class Parser:
     def __init__(self, tokens):
+        # print(tokens)
         self.tokens = tokens
         self.position = 0
         self.depth = 0
-        print(tokens)
     
     def current_token(self):
         if self.position < len(self.tokens):
@@ -18,20 +18,16 @@ class Parser:
             self.position += 1
 
     def expect(self, token):
-        self.depth += 1
-        if self.depth == 2000:
-            raise Exception(f"Stop!")
-        # print(f"Current token: {self.current_token()}")
-        # print(f"Expecting: {token}")
         self.last_expected = token
         if token == "":
+            # print("Skipping token")
             return True
         if self.current_token() and self.tokens[self.position][1] == token:
-            print(f"Successfully matched {self.current_token()} with {token}")
+            # print(f"Successfully matched {self.current_token()} with {token}")
             self.next()
             return True
         else:
-            print(f"Unsuccessful match {self.current_token()} with {token}")
+            # print(f"Unsuccessful match {self.current_token()} with {token}")
             self.unexpected_token = self.current_token()[0] if self.current_token() else "EOF"
             return False
 
@@ -53,13 +49,13 @@ class Parser:
         return False
     
     def statements(self):
-        print("Entered statmentS!")
+        # print("Entered statments!")
         if self.statement() and self.statements():
             return True
         return self.expect("")
 
     def statement(self):
-        print("Entered statement!")
+        # print("Entered statement!")
         if self.comment():
             return True
         if self.multi_line_comment():
@@ -82,15 +78,15 @@ class Parser:
             return True
         if self.function():
             return True
-        print("Exiting statement!")
+        # print("Exiting statement!")
         return False
 
     def variable_starting_statement(self):
-        print("Entered variable starting!")
+        # print("Entered variable starting!")
         if self.re_casting():
             return True
         if self.variable_assignment():
-            print("IS variable assignment!")
+            # print("IS variable assignment!")
             return True
         if self.end_of_line() and self.switch_case_block():
             return True
@@ -410,7 +406,7 @@ class Parser:
         return False
 
     def function(self):
-        print("Entered function!")
+        # print("Entered function!")
         if self.expect("HOW IZ I") and self.function_identifier() and self.parameters() and self.end_of_line() and self.function_body() and self.expect("IF U SAY SO") and self.end_of_line():
             return True
         return False
@@ -483,21 +479,22 @@ class Parser:
 
 def syntax_analyzer(tokens):
     parser = Parser(tokens)
-    if parser.program():
-        print("Correct syntax")
-    else:
-        print("Incorrect syntax")
-
-filename = "10_functions.lol"
+    return parser.program()
 
 def main():
+    passed_all_test_cases = True
     test_cases_folder = Path("../../lolcode_test_cases")
-    for file_path in test_cases_folder.glob("*.lol"):  # Adjust the pattern if needed
+    for file_path in sorted(test_cases_folder.glob("*.lol")):  # Adjust the pattern if needed
         filename = file_path.name
         print(f"Processing file: {filename}")
         with open(file_path, "r") as file:
             code = file.read()
         tokens = lexical_analyzer(code)  # Call your lexical analyzer
-        syntax_analyzer(tokens)  
+        if not syntax_analyzer(tokens):
+            passed_all_test_cases = False
+            print(f"Failed at testcase: {filename}")
+            break
+    if passed_all_test_cases:
+        print("Passed all test cases.")
 if __name__ == "__main__":
     main()
