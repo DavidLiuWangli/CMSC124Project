@@ -35,10 +35,10 @@ class Console(Widget):
         self.text_area.config(tabs=(tab_size,))
         self.text_area.config(state="disabled")
         self.text_area.pack(fill=tk.BOTH, side=tk.TOP, expand=True)
+        self.text_area.config(wrap="word")
     
     def run(self):
         tokens = lexical_analyzer(self.text_editor.text_area.get("1.0", "end"))
-        print(tokens)
         self.tokens_table.update(tokens)
         # symbol table update
         self.text_area.config(state="normal")
@@ -46,3 +46,24 @@ class Console(Widget):
         parse_result = syntax_analyzer(self.text_editor.text_area.get("1.0", "end"))
         self.text_area.insert(tk.END, parse_result)
         self.text_area.config(state="disabled")
+    
+    async def get_input(self):
+        self.text_area.config(state="normal")
+        self.text_area.bind("<Return>", on_enter)
+        
+        self.text_area.mark_set("insert", "end")
+        await listen()
+        
+        self.text_area.unbind("<Return>")
+        self.text_area.config(state="disabled")
+        
+        return self.console_input
+        
+    async def listen(self):
+        while self.console_input == None:
+            self.update()
+            await asyncio.sleep(0.01)
+            
+    def on_enter(self):
+        self.console_input = self.text_area.get("end-2l linestart", "end-1c").strip()
+        
