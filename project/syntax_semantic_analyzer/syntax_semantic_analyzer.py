@@ -1,7 +1,7 @@
-from parser_tokens import REGEX_TOKENS
 import re
 from pathlib import Path
-from lexical_analyzer import lexical_analyzer
+from syntax_semantic_analyzer.parser_tokens import REGEX_TOKENS
+from syntax_semantic_analyzer.lexical_analyzer import lexical_analyzer
 
 def typecast_string(value):
     if value == None:
@@ -52,13 +52,20 @@ def arithmetic_operation(operator, operand_1, operand_2):
         return None
 
 class SyntaxSemanticAnalyzer:
-    def __init__(self, tokens):
-        # print(tokens)
-        self.tokens = tokens
+    def __init__(self, code, console, file_name):
+        self.tokens = lexical_analyzer(code)
         self.position = 0
-        self.depth = 0
         self.symbol_table = {}
+        self.code = code
+        self.console = console
+        self.file_name = file_name
         self.execute = True
+        self.program()
+
+    def previous_type(self, index=-1):
+        if 0 <= self.position + index and self.position + index < len(self.tokens):
+            return self.tokens[self.position + index][1]
+        return None
 
     def previous_token(self, index=-1):
         if 0 <= self.position + index and self.position + index < len(self.tokens):
@@ -107,9 +114,20 @@ class SyntaxSemanticAnalyzer:
 
     def program(self):
         if self.outsides() and self.expect("HAI") and self.end_of_line() and self.data_section() and self.statements() and self.expect("KTHXBYE") and self.end_of_line() and self.outsides():
-            return True
+            self.console.update_table(self.symbol_table)
+            self.console.log(f"Completed {self.file_name}")
+            return
         
-        raise Exception(f"Unexpected token: {self.unexpected_token}, expecting: {self.last_expected}")
+        line_number = 0
+        lines = self.code.split('\n')
+
+        for number, line in enumerate(lines, start=1):
+            if self.unexpected_token in line:
+                line_number = number
+                break
+        
+        self.console.update_table(self.symbol_table)
+        self.console.log(f"{self.file_name}:{line_number} Unexpected token: {self.unexpected_token}")
 
     def outsides(self):
         if self.outside() and self.outsides():
@@ -305,13 +323,11 @@ class SyntaxSemanticAnalyzer:
         if self.expect("GIMMEH") and self.variable_identifier():
             if self.end_of_line():
                 if self.execute:
-                    self.symbol_table[self.current_variable] = input()
-                
+                    self.symbol_table[self.current_variable] = self.console.get_input(self.symbol_table)
                 return True
         
         if self.expect("GIMMEH") and self.expect("IT") and self.end_of_line():
-            if self.end_of_line():
-                self.symbol_table["IT"] = input()
+            self.symbol_table["IT"] = self.console.get_input(self.symbol_table)
             
             return True
         
@@ -323,7 +339,7 @@ class SyntaxSemanticAnalyzer:
 
             if self.output_operands() and self.end_of_line():
                 if self.execute:
-                    print(self.current_output_string)
+                    self.console.log(self.current_output_string)
                 
                 return True
         
@@ -1019,56 +1035,6 @@ class SyntaxSemanticAnalyzer:
             return True
         
         return False
-
-def DEBUG_SYMBOL_TABLE(symbol_table):
-    print("\n\n\n------------SYMBOL TABLE-------------")
     
-    for key, value in symbol_table.items():
-        print(f"{key}\t\t\t{typecast_string(value)}")
-    
-    print("------------SYMBOL TABLE-------------\n\n\n")
-
-def DEBUG_TOKENS(tokens):
-    print("\n\n\n-----------TOKENS TABLE--------------")
-
-    for token in tokens:
-        print(f"{token[0]}\t\t\t{token[1]}")
-
-    print("-----------TOKENS TABLE--------------\n\n\n")
-
-def syntax_semantic_analyzer(tokens):
-    analyzer = SyntaxSemanticAnalyzer(tokens)
-    correct_program = analyzer.program()
-    DEBUG_SYMBOL_TABLE(analyzer.symbol_table)
-    return correct_program
-
-def main():
-    testcase = int(input())
-    passed_all_test_cases = True
-    test_cases_folder = Path("../../lolcode_test_cases")
-    
-    for file_path in sorted(test_cases_folder.glob("*.lol")):
-        filename = file_path.name
-        
-        if int(filename[0:2]) != testcase:
-            continue
-        
-        print(f"Processing file: {filename}")
-        
-        with open(file_path, "r") as file:
-            code = file.read()
-        
-        print(code)
-        tokens = lexical_analyzer(code)
-        DEBUG_TOKENS(tokens)
-
-        if not syntax_semantic_analyzer(tokens):
-            passed_all_test_cases = False
-            print(f"Failed at testcase: {filename}")
-            break
-
-    # if passed_all_test_cases:
-        # print("Passed all test cases.")
-
-if __name__ == "__main__":
-    main()
+def syntax_semantic_analyzer(code, console, file_name):
+    SyntaxSemanticAnalyzer(code, console, file_name)

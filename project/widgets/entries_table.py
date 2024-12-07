@@ -12,7 +12,6 @@ class Entries_Table(Widget):
         tokens_list_title.pack(side=tk.TOP)
         
         style = ttk.Style()
-        style = ttk.Style()
         style.configure("Treeview.Heading", 
                         font=("Consolas", 12), 
                         )
@@ -37,4 +36,5 @@ class Entries_Table(Widget):
             self.table.delete(row)
         for entry in entries:
             self.table.insert("", tk.END, values=entry)
+        self.table.update()
     

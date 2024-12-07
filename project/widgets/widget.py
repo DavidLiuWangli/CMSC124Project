@@ -1,6 +1,6 @@
 import tkinter as tk
 
-class Widget(tk.Tk):
+class Widget():
     def __init__(self, root):
         self.root = root
         self.border = tk.Frame(self.root, bg="white")
