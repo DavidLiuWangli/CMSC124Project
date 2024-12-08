@@ -19,7 +19,7 @@ def math_operand_re_cast(operand, operand_type, reference):
     if operand_type not in ["numbr", "numbar"]:
         if operand_type == "noob":
             reference.halt_analyzer("Cannot implicitly typecast NOOB to NUMBR or NUMBAR")
-            return None
+            raise Exception()
         elif operand_type == "troof":
             return int(operand)
         elif re.match(REGEX_TOKENS["numbr"], operand):
@@ -28,7 +28,9 @@ def math_operand_re_cast(operand, operand_type, reference):
             return float(operand)
         else:
             reference.halt_analyzer(f"Cannot typecast {operand} to NUMBR or NUMBAR")
-            return None
+            raise Exception()
+
+    return operand
     
 def arithmetic_operation(operator, operand_1, operand_2):
     if operator == "SUM OF":
@@ -68,10 +70,12 @@ class SyntaxSemanticAnalyzer:
     def halt_analyzer(self, error_message=None):
         line_position = self.tokens[0][2]
         self.console.update_table(self.symbol_table)
-        self.console.log(f"{self.file_name}:{self.previous_line() + 1} Unexpected token: {self.previous_token()} of type {self.previous_type()}")
-        
+
         if error_message:
+            self.console.log(f"{self.file_name}:{self.previous_line() + 1} Bad token: {self.previous_token()} of type {self.previous_type()}")
             self.console.log(f"{error_message}")
+        else:
+            self.console.log(f"{self.file_name}:{self.current_token()[2] + 1} Unexpected token: {self.current_token()[0]} of type {self.current_token()[1]}")
 
         del self
         raise Exception()
@@ -215,6 +219,10 @@ class SyntaxSemanticAnalyzer:
         
         if self.function():
             return True
+
+        if self.expression() and self.end_of_line():
+            self.modify_symbol("IT", self.current_expression)
+            return True
         
         return False
 
@@ -259,7 +267,7 @@ class SyntaxSemanticAnalyzer:
             if self.end_of_line() and self.declarations() and self.expect("BUHBYE") and self.end_of_line():
                 return True
 
-            self.halt_analzyer()
+            self.halt_analyzer()
         
         return self.expect("")
 
@@ -369,16 +377,13 @@ class SyntaxSemanticAnalyzer:
                 current_variable = self.current_variable
 
                 if self.end_of_line():
-                    if self.execute and self.execute[-1]:
+                    if self.can_execute():
                         self.modify_symbol(current_variable, self.console.get_input(self.symbol_table))
                     
                     return True
 
-            self.halt_analyzer()
-        
-        if self.expect("GIMMEH"):
             if self.expect("IT") and self.end_of_line():
-                if self.execute and self.execute[-1]:
+                if self.can_execute():
                     self.modify_symbol("IT", self.console.get_input(self.symbol_table))
 
                 return True
@@ -393,7 +398,7 @@ class SyntaxSemanticAnalyzer:
                 self.current_output_string = typecast_string(self.current_operand)
 
                 if self.output_operands() and self.ending() and self.end_of_line():
-                    if self.execute and self.execute[-1]:
+                    if self.can_execute():
                         self.console.log(self.current_output_string, self.current_ending)
                 
                     return True
@@ -469,7 +474,9 @@ class SyntaxSemanticAnalyzer:
             if self.operand():
                 operand_1 = self.current_operand
                 type_1 = self.current_type
-                operand_1 = math_operand_re_cast(operand_1, type_1, self)
+                
+                if self.can_execute():
+                    operand_1 = math_operand_re_cast(operand_1, type_1, self)
                 
                 if self.expect("AN") and self.operand():
                     if not self.execute or not self.execute[-1]:
@@ -937,7 +944,7 @@ class SyntaxSemanticAnalyzer:
             if self.expect("type"):
                 self.current_type_literal = self.previous_token()
             
-                if self.execute and self.execute[-1]:
+                if self.can_execute():
                     if self.current_type_literal == "TROOF":
                         self.modify_symbol(self.current_variable, bool(self.access_symbol(self.current_variable)))
                     elif self.current_type_literal == "NUMBAR":
@@ -957,7 +964,7 @@ class SyntaxSemanticAnalyzer:
     def variable_assignment(self):
         if self.expect("R"):
             if self.value():
-                if self.execute and self.execute[-1]:
+                if self.can_execute():
                     self.modify_symbol(self.variable_starting, self.current_value)
             
                 if self.end_of_line():
@@ -968,13 +975,12 @@ class SyntaxSemanticAnalyzer:
         return False
 
     def condition_block(self):
-        if self.expression():
-            condition = self.current_expression
-            self.modify_symbol("IT", self.current_expression)
+        if self.expect("O RLY?"):
+            condition = bool(self.access_symbol("IT"))
             self.previous.append(False)
             self.execute.append(self.execute[-1] and (not self.previous[-1]) and self.access_symbol("IT"))
 
-            if self.end_of_line() and self.expect("O RLY?") and self.end_of_line() and self.expect("YA RLY") and self.end_of_line() and self.statements():
+            if self.end_of_line() and self.expect("YA RLY") and self.end_of_line() and self.statements():
                 self.previous[-1] = self.previous[-1] or self.execute[-1]
 
                 if self.else_if_chain() and self.else_block() and self.expect("OIC") and self.end_of_line():
@@ -996,8 +1002,13 @@ class SyntaxSemanticAnalyzer:
         if self.expect("MEBBE"):
             if self.expression():
                 condition = self.current_expression
-                self.modify_symbol("IT", self.current_expression)
+
+                if self.execute[-2] and (not self.previous[-1]):
+                    self.modify_symbol("IT", bool(self.current_expression))
+                
                 self.execute[-1] = self.execute[-2] and (not self.previous[-1]) and self.access_symbol("IT")
+                # self.console.log(f"EXECUTE {self.execute}")
+                # self.console.log(f"PREVIOUS {self.previous}")
 
                 if self.end_of_line() and self.statements():
                     self.previous[-1] = self.previous[-1] or self.execute[-1]
