@@ -55,7 +55,7 @@ class SyntaxSemanticAnalyzer:
     def __init__(self, code, console, file_name):
         self.tokens = lexical_analyzer(code)
         self.position = 0
-        self.symbol_table = {}
+        self.symbol_table = {"IT": None}
         self.code = code
         self.console = console
         self.file_name = file_name
@@ -436,7 +436,7 @@ class SyntaxSemanticAnalyzer:
             return True
         
         if self.expect("IT"):
-            self.current_oeprand = self.access_symbol("IT")
+            self.current_operand = self.access_symbol("IT")
             self.set_current_type()
             return True
         
@@ -1140,24 +1140,24 @@ class SyntaxSemanticAnalyzer:
                 if self.current_function in self.function_references: 
                     caller_position = self.position 
                     function_reference = self.function_references[self.current_function]
-                    print(f"{self.current_function}")
-                    print(f"{function_reference}")
-                    print(f"{self.tokens[function_reference[0]]}")
                     if len(self.current_arguments) + 1 == len(function_reference):
                         
                         self.position = function_reference[0]
                         symbol_table_holder = self.symbol_table
                         self.symbol_table = {}
                         for i in range(1, len(function_reference)):
-                            self.symbol_table[function_reference[i]] = self.current_arguments[i - 1]
-                        print(f"{self.position}")
-                        print("oi")    
+                            self.symbol_table[function_reference[i]] = self.current_arguments[i - 1]   
+                        self.symbol_table["IT"] = None
+                        
                         if self.function_body():
                             self.position = caller_position
+                            return_value = self.access_symbol("IT")
                             self.symbol_table = symbol_table_holder
+                            if return_value != None:
+                                self.modify_symbol("IT", return_value)
                             self.current_function = None
                             self.current_arguments = None
-                            print(f"{self.position}")
+                            
                             if self.expect("MKAY") and self.end_of_line():
                                 return True
 
@@ -1213,6 +1213,7 @@ class SyntaxSemanticAnalyzer:
     def return_function(self):
         if self.expect("FOUND YR"):
             if self.value() and self.end_of_line():
+                self.modify_symbol("IT", self.current_value)
                 return True
 
             self.halt_analyzer()
