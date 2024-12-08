@@ -15,10 +15,11 @@ def typecast_string(value):
 
     return str(value)
 
-def math_operand_re_cast(operand, operand_type):
+def math_operand_re_cast(operand, operand_type, reference):
     if operand_type not in ["numbr", "numbar"]:
         if operand_type == "noob":
-            raise Exception(f"Cannot implicitly typecast NOOB to NUMBR or NUMBAR")
+            reference.halt_analyzer("Cannot implicitly typecast NOOB to NUMBR or NUMBAR")
+            return None
         elif operand_type == "troof":
             return int(operand)
         elif re.match(REGEX_TOKENS["numbr"], operand):
@@ -26,10 +27,9 @@ def math_operand_re_cast(operand, operand_type):
         elif re.match(REGEX_TOKENS["numbar"], operand):
             return float(operand)
         else:
-            raise Exception(f"Cannot typecast {operand} to NUMBR or NUMBAR")
+            reference.halt_analyzer(f"Cannot typecast {operand} to NUMBR or NUMBAR")
+            return None
     
-    return operand
-
 def arithmetic_operation(operator, operand_1, operand_2):
     if operator == "SUM OF":
         return operand_1 + operand_2
@@ -68,7 +68,7 @@ class SyntaxSemanticAnalyzer:
     def halt_analyzer(self, error_message=None):
         line_position = self.tokens[0][2]
         self.console.update_table(self.symbol_table)
-        self.console.log(f"{self.file_name}:{self.current_token()[2] + 1} Unexpected token: {self.unexpected_token}")
+        self.console.log(f"{self.file_name}:{self.previous_line() + 1} Unexpected token: {self.previous_token()} of type {self.previous_type()}")
         
         if error_message:
             self.console.log(f"{error_message}")
@@ -103,6 +103,12 @@ class SyntaxSemanticAnalyzer:
         if 0 <= self.position + index and self.position + index < len(self.tokens):
             return self.tokens[self.position + index][1]
         
+        return None
+
+    def previous_line(self, index=-1):
+        if 0 <= self.position + index and self.position + index < len(self.tokens):
+            return self.tokens[self.position + index][2]
+
         return None
 
     def current_token(self):
@@ -463,6 +469,7 @@ class SyntaxSemanticAnalyzer:
             if self.operand():
                 operand_1 = self.current_operand
                 type_1 = self.current_type
+                operand_1 = math_operand_re_cast(operand_1, type_1, self)
                 
                 if self.expect("AN") and self.operand():
                     if not self.execute or not self.execute[-1]:
@@ -474,8 +481,7 @@ class SyntaxSemanticAnalyzer:
 
                     # print(f"Operand 1: {operand_1} {type_1}, Operand 2: {operand_2} {type_2}")
 
-                    operand_1 = math_operand_re_cast(operand_1, type_1)
-                    operand_2 = math_operand_re_cast(operand_2, type_2)
+                    operand_2 = math_operand_re_cast(operand_2, type_2, self)
                     self.current_math_expression = arithmetic_operation(operator, operand_1, operand_2) 
                     return True
 
@@ -630,13 +636,13 @@ class SyntaxSemanticAnalyzer:
             if self.concatenation_operand():
                 operand_1 = self.current_concatenation_operand
                 type_1 = self.current_concatenation_type
+                operand_1 = math_operand_re_cast(operand_1, type_1, self)
 
                 if self.expect("AN") and self.concatenation_operand():
                     operand_2 = self.current_concatenation_operand
                     type_2 = self.current_concatenation_type
 
-                    operand_1 = math_operand_re_cast(operand_1, type_1)
-                    operand_2 = math_operand_re_cast(operand_2, type_2)
+                    operand_2 = math_operand_re_cast(operand_2, type_2, self)
                     arithmetic_operation(operator, operand_1, operand_2)
                     return True
 
@@ -835,13 +841,13 @@ class SyntaxSemanticAnalyzer:
             if self.all_any_operand():
                 operand_1 = self.current_all_any_operand
                 type_1 = self.current_all_any_type
+                operand_1 = math_operand_re_cast(operand_1, type_1, self)
 
                 if self.expect("AN") and self.all_any_operand():
                     operand_2 = self.current_all_any_operand
                     type_2 = self.current_all_any_type
 
-                    operand_1 = math_operand_re_cast(operand_1, type_1)
-                    operand_2 = math_operand_re_cast(operand_2, type_2)
+                    operand_2 = math_operand_re_cast(operand_2, type_2, self)
                     arithmetic_operation(operator, operand_1, operand_2)
                     return True
 
