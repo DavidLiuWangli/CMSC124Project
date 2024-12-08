@@ -1,6 +1,5 @@
 # LOLCODE Interpreter
-<h2>Compiled Nations</h2>
-<h3>CMSC 124 ST1L</h3>
+### CMSC 124 Final Project by Compiled Nations
 
 ---
 
