@@ -75,18 +75,18 @@ class SyntaxSemanticAnalyzer:
         raise Exception()
 
     def access_symbol(self, variable):
-        if variable not in self.tokens:
+        if variable not in self.symbol_table:
             self.halt_analyzer(f"The key {variable} is not defined.")
             return None
 
-        return self.tokens[variable]
+        return self.symbol_table[variable]
 
-    def modify_symbol(self, variable, value):
-        if variable not in self.tokens:
+    def modify_symbol(self, variable, value, first=False):
+        if variable not in self.symbol_table and not first:
             self.halt_analyzer(f"The key {variable} is not defined.")
             return
 
-        self.tokens[variable] = value
+        self.symbol_table[variable] = value
 
     def can_execute(self):
         return self.execute and self.execute[-1]
@@ -261,7 +261,7 @@ class SyntaxSemanticAnalyzer:
                 declaration_variable = self.current_variable
 
                 if self.initialization():
-                    self.modify_symbol(declaration_variable, self.current_value) 
+                    self.modify_symbol(declaration_variable, self.current_value, True) 
                     
                     if self.end_of_line() and self.declarations():
                         return True
@@ -797,7 +797,7 @@ class SyntaxSemanticAnalyzer:
             return True
         
         if self.expect("IT"):
-            self.current_all_any_operand = self.symbol_table["IT"]
+            self.current_all_any_operand = self.access_symbol_table("IT")
             self.set_current_all_any_type()
             return True
         
@@ -898,11 +898,11 @@ class SyntaxSemanticAnalyzer:
                 if self.current_type_literal == "TROOF":
                     self.current_typecasting = bool(self.access_symbol(self.current_variable))
                 elif self.current_type_literal == "NUMBAR":
-                    self.current_typecasting = float(self.symbol_table[self.current_variable])
+                    self.current_typecasting = float(self.access_symbol_table(self.current_variable))
                 elif self.current_type_literal == "NUMBR":
-                    self.current_typecasting = int(self.symbol_table[self.current_variable])
+                    self.current_typecasting = int(self.access_symbol_table(self.current_variable))
                 elif self.current_type_literal == "YARN":
-                    self.current_typecasting = typecast_string(self.symbol_table[self.current_variable])
+                    self.current_typecasting = typecast_string(self.access_symbol_table(self.current_variable))
 
                 return True
 
@@ -925,11 +925,11 @@ class SyntaxSemanticAnalyzer:
                     if self.current_type_literal == "TROOF":
                         self.modify_symbol(self.current_variable, bool(self.access_symbol(self.current_variable)))
                     elif self.current_type_literal == "NUMBAR":
-                        self.symbol_table[self.current_variable] = float(self.symbol_table[self.current_variable])
+                        self.modify_symbol(self.current_variable, float(self.access_symbol_table(self.current_variable)))
                     elif self.current_type_literal == "NUMBR":
-                        self.symbol_table[self.current_variable] = int(self.symbol_table[self.current_variable])
+                        self.modify_symbol(self.current_variable, int(self.access_symbol_table(self.current_variable)))
                     elif self.current_type_literal == "YARN":
-                        self.symbol_table[self.current_variable] = typecast_string(self.symbol_table[self.current_variable])
+                        self.modify_symbol(self.current_variable, typecast_string(self.access_symbol_table(self.current_variable)))
 
                 if self.end_of_line():
                     return True
@@ -942,7 +942,7 @@ class SyntaxSemanticAnalyzer:
         if self.expect("R"):
             if self.value():
                 if self.execute and self.execute[-1]:
-                    self.symbol_table[self.variable_starting] = self.current_value 
+                    self.modify_symbol(self.variable_starting, self.current_value)
             
                 if self.end_of_line():
                     return True
@@ -954,9 +954,9 @@ class SyntaxSemanticAnalyzer:
     def condition_block(self):
         if self.expression():
             condition = self.current_expression
-            self.symbol_table["IT"] = self.current_expression
+            self.modify_symbol("IT", self.current_expression)
             self.previous.append(False)
-            self.execute.append(self.execute[-1] and (not self.previous[-1]) and self.symbol_table["IT"])
+            self.execute.append(self.execute[-1] and (not self.previous[-1]) and self.access_symbol_table("IT"))
 
             if self.end_of_line() and self.expect("O RLY?") and self.end_of_line() and self.expect("YA RLY") and self.end_of_line() and self.statements():
                 self.previous[-1] = self.previous[-1] or self.execute[-1]
@@ -981,8 +981,8 @@ class SyntaxSemanticAnalyzer:
         if self.expect("MEBBE"):
             if self.expression():
                 condition = self.current_expression
-                self.symbol_table["IT"] = self.current_expression
-                self.execute[-1] = self.execute[-2] and (not self.previous[-1]) and self.symbol_table["IT"]
+                self.modify_symbol("IT", self.current_expression)
+                self.execute[-1] = self.execute[-2] and (not self.previous[-1]) and self.access_symbol_table("IT")
 
                 if self.end_of_line() and self.statements():
                     self.previous[-1] = self.previous[-1] or self.execute[-1]
