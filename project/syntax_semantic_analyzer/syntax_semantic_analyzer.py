@@ -63,12 +63,30 @@ class SyntaxSemanticAnalyzer:
         self.previous = []
         self.program()
 
-    def halt_analyzer(self):
+    def halt_analyzer(self, error_message=None):
         line_position = self.tokens[0][2]
         self.console.update_table(self.symbol_table)
-        self.console.log(f"{self.file_name}:{self.current_token()[2]} Unexpected token: {self.unexpected_token}")
+        self.console.log(f"{self.file_name}:{self.current_token()[2] + 1} Unexpected token: {self.unexpected_token}")
+        
+        if error_message:
+            self.console.log(f"{error_message}")
+
         del self
         raise Exception()
+
+    def access_symbol(self, variable):
+        if variable not in self.tokens:
+            self.halt_analyzer(f"The key {variable} is not defined.")
+            return None
+
+        return self.tokens[variable]
+
+    def modify_symbol(self, variable, value):
+        if variable not in self.tokens:
+            self.halt_analyzer(f"The key {variable} is not defined.")
+            return
+
+        self.tokens[variable] = value
 
     def can_execute(self):
         return self.execute and self.execute[-1]
@@ -96,9 +114,6 @@ class SyntaxSemanticAnalyzer:
             self.position += 1
 
     def expect(self, token_type, token_value=None):
-        if token_type == "linebreak":
-            return True
-        
         if token_value == "NOOB" and self.current_token() and self.tokens[self.position][0] == "NOOB":
             self.next()
             return True
@@ -126,7 +141,7 @@ class SyntaxSemanticAnalyzer:
         if self.outsides() and self.expect("HAI") and self.end_of_line() and self.data_section() and self.statements() and self.expect("KTHXBYE") and self.end_of_line() and self.outsides():
             self.console.update_table(self.symbol_table)
             self.console.log(f"Completed {self.file_name}")
-            return
+            return True
 
     def outsides(self):
         if self.outside() and self.outsides():
@@ -246,8 +261,8 @@ class SyntaxSemanticAnalyzer:
                 declaration_variable = self.current_variable
 
                 if self.initialization():
-                    self.symbol_table[declaration_variable] = self.current_value
-                
+                    self.modify_symbol(declaration_variable, self.current_value) 
+                    
                     if self.end_of_line() and self.declarations():
                         return True
 
@@ -281,7 +296,7 @@ class SyntaxSemanticAnalyzer:
             return True
         
         if self.variable_identifier():
-            self.current_value = self.symbol_table[self.current_variable]
+            self.current_value = self.access_symbol(self.current_variable)
             return True
         
         return False
@@ -347,7 +362,8 @@ class SyntaxSemanticAnalyzer:
 
                 if self.end_of_line():
                     if self.execute and self.execute[-1]:
-                        self.symbol_table[current_variable] = self.console.get_input(self.symbol_table)
+                        self.modify_symbol(current_variable, self.console.get_input(self.symbol_table))
+                    
                     return True
 
             self.halt_analyzer()
@@ -355,8 +371,8 @@ class SyntaxSemanticAnalyzer:
         if self.expect("GIMMEH"):
             if self.expect("IT") and self.end_of_line():
                 if self.execute and self.execute[-1]:
-                    self.symbol_table["IT"] = self.console.get_input(self.symbol_table)
-            
+                    self.modify_symbol("IT", self.console.get_input(self.symbol_table))
+
                 return True
 
             self.halt_analyzer()
@@ -409,7 +425,7 @@ class SyntaxSemanticAnalyzer:
             return True
 
         if self.variable_identifier():
-            self.current_operand = self.symbol_table[self.previous_token()]
+            self.current_operand = self.access_symbol(self.previous_token())
             self.set_current_type() 
             return True
         
@@ -419,7 +435,7 @@ class SyntaxSemanticAnalyzer:
             return True
         
         if self.expect("IT"):
-            self.current_oeprand = self.symbol_table["IT"]
+            self.current_oeprand = self.access_symbol("IT")
             self.set_current_type()
             return True
         
@@ -554,7 +570,7 @@ class SyntaxSemanticAnalyzer:
             return True
 
         if self.variable_identifier():
-            self.current_concatenation_operand = self.symbol_table[self.current_variable]
+            self.current_concatenation_operand = self.access_symbol(self.current_variable)
             self.set_current_concatenation_type()
             return True
         
@@ -564,7 +580,7 @@ class SyntaxSemanticAnalyzer:
             return True
         
         if self.expect("IT"):
-            self.current_concatenation_operand = self.symbol_table["IT"]
+            self.current_concatenation_operand = self.access_symbol("IT")
             self.set_current_concatenation_type()
             return True
         
@@ -771,7 +787,7 @@ class SyntaxSemanticAnalyzer:
             return True
 
         if self.variable_identifier():
-            self.current_all_any_operand = self.symbol_table[self.current_variable]
+            self.current_all_any_operand = self.access_symbol(self.current_variable)
             self.set_current_all_any_type()
             return True
         
@@ -880,7 +896,7 @@ class SyntaxSemanticAnalyzer:
                 self.current_type_literal = self.previous_token()
 
                 if self.current_type_literal == "TROOF":
-                    self.current_typecasting = bool(self.symbol_table[self.current_variable])
+                    self.current_typecasting = bool(self.access_symbol(self.current_variable))
                 elif self.current_type_literal == "NUMBAR":
                     self.current_typecasting = float(self.symbol_table[self.current_variable])
                 elif self.current_type_literal == "NUMBR":
@@ -907,7 +923,7 @@ class SyntaxSemanticAnalyzer:
             
                 if self.execute and self.execute[-1]:
                     if self.current_type_literal == "TROOF":
-                        self.symbol_table[self.current_variable] = bool(self.symbol_table[self.current_variable])
+                        self.modify_symbol(self.current_variable, bool(self.access_symbol(self.current_variable)))
                     elif self.current_type_literal == "NUMBAR":
                         self.symbol_table[self.current_variable] = float(self.symbol_table[self.current_variable])
                     elif self.current_type_literal == "NUMBR":
@@ -1150,6 +1166,8 @@ class SyntaxSemanticAnalyzer:
         return self.expect("")
 
     def end_of_line(self):
+        print("END OF LINE")
+        
         if self.comment():
             return True
         
