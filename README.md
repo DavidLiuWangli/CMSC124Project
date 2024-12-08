@@ -1,4 +1,4 @@
-# LOLCODE Interpreter <br> by Compiled Nations <br> CMSC 124 ST1L
+# LOLCODE Interpreter <br> ## by Compiled Nations <br> ### CMSC 124 ST1L
 
 ---
 
