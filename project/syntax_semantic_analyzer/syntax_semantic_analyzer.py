@@ -797,7 +797,7 @@ class SyntaxSemanticAnalyzer:
             return True
         
         if self.expect("IT"):
-            self.current_all_any_operand = self.access_symbol_table("IT")
+            self.current_all_any_operand = self.access_symbol("IT")
             self.set_current_all_any_type()
             return True
         
@@ -898,11 +898,11 @@ class SyntaxSemanticAnalyzer:
                 if self.current_type_literal == "TROOF":
                     self.current_typecasting = bool(self.access_symbol(self.current_variable))
                 elif self.current_type_literal == "NUMBAR":
-                    self.current_typecasting = float(self.access_symbol_table(self.current_variable))
+                    self.current_typecasting = float(self.access_symbol(self.current_variable))
                 elif self.current_type_literal == "NUMBR":
-                    self.current_typecasting = int(self.access_symbol_table(self.current_variable))
+                    self.current_typecasting = int(self.access_symbol(self.current_variable))
                 elif self.current_type_literal == "YARN":
-                    self.current_typecasting = typecast_string(self.access_symbol_table(self.current_variable))
+                    self.current_typecasting = typecast_string(self.access_symbol(self.current_variable))
 
                 return True
 
@@ -925,11 +925,11 @@ class SyntaxSemanticAnalyzer:
                     if self.current_type_literal == "TROOF":
                         self.modify_symbol(self.current_variable, bool(self.access_symbol(self.current_variable)))
                     elif self.current_type_literal == "NUMBAR":
-                        self.modify_symbol(self.current_variable, float(self.access_symbol_table(self.current_variable)))
+                        self.modify_symbol(self.current_variable, float(self.access_symbol(self.current_variable)))
                     elif self.current_type_literal == "NUMBR":
-                        self.modify_symbol(self.current_variable, int(self.access_symbol_table(self.current_variable)))
+                        self.modify_symbol(self.current_variable, int(self.access_symbol(self.current_variable)))
                     elif self.current_type_literal == "YARN":
-                        self.modify_symbol(self.current_variable, typecast_string(self.access_symbol_table(self.current_variable)))
+                        self.modify_symbol(self.current_variable, typecast_string(self.access_symbol(self.current_variable)))
 
                 if self.end_of_line():
                     return True
@@ -956,11 +956,10 @@ class SyntaxSemanticAnalyzer:
             condition = self.current_expression
             self.modify_symbol("IT", self.current_expression)
             self.previous.append(False)
-            self.execute.append(self.execute[-1] and (not self.previous[-1]) and self.access_symbol_table("IT"))
+            self.execute.append(self.execute[-1] and (not self.previous[-1]) and self.access_symbol("IT"))
 
             if self.end_of_line() and self.expect("O RLY?") and self.end_of_line() and self.expect("YA RLY") and self.end_of_line() and self.statements():
                 self.previous[-1] = self.previous[-1] or self.execute[-1]
-                self.execute[-1] = self.execute[-2] and (not self.previous[-1])
 
                 if self.else_if_chain() and self.else_block() and self.expect("OIC") and self.end_of_line():
                     self.previous.pop()
@@ -982,11 +981,10 @@ class SyntaxSemanticAnalyzer:
             if self.expression():
                 condition = self.current_expression
                 self.modify_symbol("IT", self.current_expression)
-                self.execute[-1] = self.execute[-2] and (not self.previous[-1]) and self.access_symbol_table("IT")
+                self.execute[-1] = self.execute[-2] and (not self.previous[-1]) and self.access_symbol("IT")
 
                 if self.end_of_line() and self.statements():
                     self.previous[-1] = self.previous[-1] or self.execute[-1]
-                    self.execute[-1] = self.execute[-2] and (not self.previous[-1])
                     return True
 
             self.halt_analyzer()
@@ -995,6 +993,8 @@ class SyntaxSemanticAnalyzer:
 
     def else_block(self):
         if self.expect("NO WAI"):
+            self.execute[-1] = self.execute[-2] and (not self.previous[-1])
+
             if self.end_of_line() and self.statements():
                 return True
 
@@ -1004,28 +1004,40 @@ class SyntaxSemanticAnalyzer:
 
     def switch_case_block(self, has_variable=True):
         if self.expect("WTF?"):
-            if not has_variable:
-                condition = self.access_symbol["IT"]
-                self.previous.append(False)
-                self.execute.append(self.execute[-1] and (not self.previous[-1]) and self.acces
+            compare_value = None
 
-            if self.end_of_line() and self.cases_chain() and self.default_case_block() and self.expect("OIC") and self.end_of_line():
+            if not has_variable:
+                compare_value = self.access_symbol("IT")
+            else:
+                compare_value = self.access_symbol(self.current_variable)
+
+            self.previous.append(False)
+            self.execute.append(False)
+
+            if self.end_of_line() and self.cases_chain(compare_value) and self.default_case_block() and self.expect("OIC") and self.end_of_line():
+                self.previous.pop()
+                self.execute.pop()
                 return True
 
             self.halt_analyzer()
         
         return False
 
-    def cases_chain(self):
-        if self.case_block() and self.cases_chain():
+    def cases_chain(self, compare_value):
+        if self.case_block(compare_value) and self.cases_chain(compare_value):
             return True
         
         return self.expect("")
 
-    def case_block(self):
+    def case_block(self, compare_value):
         if self.expect("OMG"):
-            if self.literal() and self.end_of_line() and self.control_body():
-                return True
+            if self.literal():
+                condition = self.current_literal == compare_value
+                print(f"Condition = {self.current_literal} == {compare_value} = {condition}")
+                self.execute[-1] = self.execute[-2] and (not self.previous[-1]) and condition
+
+                if self.end_of_line() and self.control_body():
+                    return True
 
             self.halt_analyzer()
         
@@ -1033,6 +1045,8 @@ class SyntaxSemanticAnalyzer:
 
     def default_case_block(self):
         if self.expect("OMGWTF"):
+            self.execute[-1] = self.execute[-2] and (not self.previous[-1])
+
             if self.end_of_line() and self.control_body():
                 return True
 
@@ -1042,7 +1056,11 @@ class SyntaxSemanticAnalyzer:
 
     def control_body(self):
         if self.expect("GTFO"):
-            if self.end_of_line():
+            if self.can_execute():
+                self.previous[-1] = self.previous[-1] or self.execute[-1]
+                self.execute[-1] = self.execute[-2] and (not self.previous[-1])
+            
+            if self.end_of_line() and self.control_body():
                 return True
 
             self.halt_analyzer()
