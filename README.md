@@ -1,26 +1,11 @@
 # LOLCODE Interpreter  
-## by Compiled Nations  
-### CMSC 124 ST1L
-
----
-
-## 📋 Table of Contents
-1. [Introduction](#introduction)
-2. [Features](#features)
-3. [Installation](#installation)
-4. [Usage](#usage)
-
+### by Compiled Nations (CMSC 124 ST1L)
 ---
 
 ## 🛠️ Introduction
 
 The **LOLCODE Interpreter** is a program designed to interpret and execute LOLCODE scripts.  
-This project was created based on the specifications provided for CMSC 124.  
-
-### Contributors:
-- **Person1**  
-- **Person2**  
-- **Person3**
+This project was created based on the specifications provided in CMSC 124.  
 
 ---
 
