@@ -1,4 +1,5 @@
-# LOLCODE Interpreter
+# CMSC 124 Project by Compiled Nations
+
 ---
 
 ## 📋 Table of Contents
