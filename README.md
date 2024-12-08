@@ -1,4 +1,6 @@
-# CMSC 124 Project by Compiled Nations
+# LOLCODE Interpreter  
+## by Compiled Nations  
+### CMSC 124 ST1L
 
 ---
 
@@ -12,29 +14,44 @@
 
 ## 🛠️ Introduction
 
-**Project Name** is a [brief description] that helps you do something awesome! Whether you're [goal] or [another goal], this project provides tools and features to make your life easier.
+The **LOLCODE Interpreter** is a program designed to interpret and execute LOLCODE scripts.  
+This project was created based on the specifications provided for CMSC 124.  
+
+### Contributors:
+- **Person1**  
+- **Person2**  
+- **Person3**
 
 ---
 
 ## ✨ Features
 
-- ✅ Feature 1: A brief description of this feature.
-- ✅ Feature 2: Another useful feature description.
-- ✅ Feature 3: Highlight something unique!
+- ✅ Supports creating, editing, saving, and running LOLCODE programs.  
+- ✅ User-friendly interface with the following sections:  
+  1. **Text Editor**: Write LOLCODE scripts.  
+  2. **Console**: View program input and output.  
+  3. **Lexemes Table**: Displays lexical tokens during runtime.  
+  4. **Symbol Table**: Represents variable assignments and values during runtime.  
+- ✅ Interactive input/output capabilities directly from the console.
 
 ---
 
 ## 🚀 Installation
 
-Follow these steps to install this program:
+Follow these steps to install and run the LOLCODE Interpreter:
 
 ### Requirements
 Ensure you have the following installed:
-- Python 3.7+
-- [Optional tools/libraries]
+- Python 3.7 or later
 
 ### Steps
-1. Clone this repository:
+1. Download the ZIP file containing the program.  
+2. Extract the ZIP file to a folder of your choice.  
+3. Open a terminal or command prompt and navigate to the extracted folder:
    ```bash
-   git clone https://github.com/your-username/your-repo.git
-   cd your-repo
+   cd path/to/extracted-folder
+   ```
+4. Run the program using the following command:
+   ```bash
+   python project/main.py
+   ```
