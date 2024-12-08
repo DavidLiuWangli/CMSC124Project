@@ -1118,8 +1118,8 @@ class SyntaxSemanticAnalyzer:
                 if self.parameters() and self.end_of_line():
                     self.function_references[self.current_function].insert(0, self.position)
                     while True:
-                        if self.expect("HOW IZ I"):
-                            break
+                        #if self.expect("HOW IZ I"):
+                        #    break
                         if self.expect("IF U SAY SO"):
                             if self.end_of_line():
                                 print(f"New Function: {self.current_function}:{self.function_references[self.current_function]}")
