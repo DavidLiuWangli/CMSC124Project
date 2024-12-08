@@ -59,7 +59,8 @@ class SyntaxSemanticAnalyzer:
         self.code = code
         self.console = console
         self.file_name = file_name
-        self.execute = True
+        self.execute = [True]
+        self.previous = []
         self.program()
 
     def previous_type(self, index=-1):
@@ -145,7 +146,6 @@ class SyntaxSemanticAnalyzer:
         return False
     
     def statements(self):
-        # print("EXECUTE:", self.execute)
         # print("Entered statments!")
         if self.statement() and self.statements():
             return True
@@ -167,7 +167,7 @@ class SyntaxSemanticAnalyzer:
             return True
         
         if self.variable_identifier():
-            self.current_variable = self.previous_token()
+            self.variable_starting = self.previous_token()
             
             if self.variable_starting_statement():
                 return True
@@ -199,7 +199,6 @@ class SyntaxSemanticAnalyzer:
             return True
         
         if self.variable_assignment():
-            # print("IS variable assignment!")
             return True
         
         if self.end_of_line() and self.switch_case_block():
@@ -321,13 +320,16 @@ class SyntaxSemanticAnalyzer:
 
     def input(self):
         if self.expect("GIMMEH") and self.variable_identifier():
+            current_variable = self.current_variable
+
             if self.end_of_line():
-                if self.execute:
-                    self.symbol_table[self.current_variable] = self.console.get_input(self.symbol_table)
+                if self.execute and self.execute[-1]:
+                    self.symbol_table[current_variable] = self.console.get_input(self.symbol_table)
                 return True
         
         if self.expect("GIMMEH") and self.expect("IT") and self.end_of_line():
-            self.symbol_table["IT"] = self.console.get_input(self.symbol_table)
+            if self.execute and self.execute[-1]:
+                self.symbol_table["IT"] = self.console.get_input(self.symbol_table)
             
             return True
         
@@ -338,7 +340,7 @@ class SyntaxSemanticAnalyzer:
             self.current_output_string = typecast_string(self.current_operand)
 
             if self.output_operands() and self.end_of_line():
-                if self.execute:
+                if self.execute and self.execute[-1]:
                     self.console.log(self.current_output_string)
                 
                 return True
@@ -403,7 +405,7 @@ class SyntaxSemanticAnalyzer:
                 type_1 = self.current_type
                 
                 if self.expect("AN") and self.operand():
-                    if not self.execute:
+                    if not self.execute or not self.execute[-1]:
                         self.current_math_expression = None
                         return True
 
@@ -621,7 +623,7 @@ class SyntaxSemanticAnalyzer:
                 if self.expect("AN") and self.operand():
                     operand_2 = self.current_operand
                     
-                    # print(f"Comparing {operand_1} and {operand_2}")
+                    print(f"Comparing {operand_1} and {operand_2}")
 
                     if current_operator == "BOTH SAEM":
                         self.current_comparison_expression = (operand_1 == operand_2)
@@ -827,7 +829,7 @@ class SyntaxSemanticAnalyzer:
         if self.expect("IS NOW A") and self.expect("type"):
             self.current_type_literal = self.previous_token()
             
-            if self.execute:
+            if self.execute and self.execute[-1]:
                 if self.current_type_literal == "TROOF":
                     self.symbol_table[self.current_variable] = bool(self.symbol_table[self.current_variable])
                 elif self.current_type_literal == "NUMBAR":
@@ -844,8 +846,8 @@ class SyntaxSemanticAnalyzer:
 
     def variable_assignment(self):
         if self.expect("R") and self.value():
-            if self.execute:
-                self.symbol_table[self.current_variable] = self.current_value 
+            if self.execute and self.execute[-1]:
+                self.symbol_table[self.variable_starting] = self.current_value 
             if self.end_of_line():
                 return True
             
@@ -854,20 +856,19 @@ class SyntaxSemanticAnalyzer:
         return False
 
     def condition_block(self):
-        # print("Entered condition block")
-        
         if self.expression():
+            condition = self.current_expression
             self.symbol_table["IT"] = self.current_expression
-            
-            if self.symbol_table["IT"]:
-                self.execute = True
-            else:
-                self.execute = False
+            self.previous.append(False)
+            self.execute.append(self.execute[-1] and (not self.previous[-1]) and self.symbol_table["IT"])
 
             if self.end_of_line() and self.expect("O RLY?") and self.end_of_line() and self.expect("YA RLY") and self.end_of_line() and self.statements():
-                self.execute = not self.execute
+                self.previous[-1] = self.previous[-1] or self.execute[-1]
+                self.execute[-1] = self.execute[-2] and (not self.previous[-1])
 
                 if self.else_if_chain() and self.else_block() and self.expect("OIC") and self.end_of_line():
+                    self.previous.pop()
+                    self.execute.pop()
                     return True
         
         return False
@@ -879,8 +880,15 @@ class SyntaxSemanticAnalyzer:
         return self.expect("")
 
     def else_if_block(self):
-        if self.expect("MEBBE") and self.expression() and self.end_of_line() and self.statements():
-            return True
+        if self.expect("MEBBE") and self.expression():
+            condition = self.current_expression
+            self.symbol_table["IT"] = self.current_expression
+            self.execute[-1] = self.execute[-2] and (not self.previous[-1]) and self.symbol_table["IT"]
+
+            if self.end_of_line() and self.statements():
+                self.previous[-1] = self.previous[-1] or self.execute[-1]
+                self.execute[-1] = self.execute[-2] and (not self.previous[-1])
+                return True
         
         return False
 
