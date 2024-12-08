@@ -82,10 +82,11 @@ class Text_Editor(Widget):
         self.line_numbers.yview_moveto(new_fraction)
     
     def on_text_area_change(self, event):
-        if "*" not in self.get_file_name():
-            self.set_asterisk_file_name()
-        self.text_area.edit_modified(False)
-        self.update_line_numbers()
+        if self.text_area.edit_modified():
+            if "*" not in self.get_file_name():
+                self.set_asterisk_file_name()
+            self.text_area.edit_modified(False)
+            self.update_line_numbers()
     
     def update_line_numbers(self, event=None):
         self.line_numbers.config(state="normal")
