@@ -193,7 +193,7 @@ class SyntaxSemanticAnalyzer:
 
             self.halt_analyzer()
         
-        if self.switch_case_block():
+        if self.switch_case_block(False):
             return True
         
         if self.condition_block():
@@ -1002,8 +1002,13 @@ class SyntaxSemanticAnalyzer:
         
         return self.expect("")
 
-    def switch_case_block(self):
+    def switch_case_block(self, has_variable=True):
         if self.expect("WTF?"):
+            if not has_variable:
+                condition = self.access_symbol["IT"]
+                self.previous.append(False)
+                self.execute.append(self.execute[-1] and (not self.previous[-1]) and self.acces
+
             if self.end_of_line() and self.cases_chain() and self.default_case_block() and self.expect("OIC") and self.end_of_line():
                 return True
 
