@@ -61,6 +61,7 @@ class SyntaxSemanticAnalyzer:
         self.file_name = file_name
         self.execute = [True]
         self.previous = []
+        self.function_references = {}
         self.program()
 
     def halt_analyzer(self, error_message=None):
@@ -1007,7 +1008,7 @@ class SyntaxSemanticAnalyzer:
             if not has_variable:
                 condition = self.access_symbol["IT"]
                 self.previous.append(False)
-                self.execute.append(self.execute[-1] and (not self.previous[-1]) and self.acces
+                # self.execute.append(self.execute[-1] and (not self.previous[-1]) and self.acces
 
             if self.end_of_line() and self.cases_chain() and self.default_case_block() and self.expect("OIC") and self.end_of_line():
                 return True
@@ -1094,8 +1095,21 @@ class SyntaxSemanticAnalyzer:
 
     def function(self):
         if self.expect("HOW IZ I"):
-            if self.function_identifier() and self.parameters() and self.end_of_line() and self.function_body() and self.expect("IF U SAY SO") and self.end_of_line():
-                return True
+            if self.function_identifier():
+                self.function_references[self.current_function] = []
+                if self.parameters() and self.end_of_line():
+                    self.function_references[self.current_function].insert(0, self.position)
+                    while True:
+                        if self.expect("HOW IZ I"):
+                            break
+                        if self.expect("IF U SAY SO"):
+                            if self.end_of_line():
+                                print(f"New Function: {self.current_function}:{self.function_references[self.current_function]}")
+                                self.current_function = None
+                                return True
+                        if self.position >= len(self.tokens):
+                            break
+                        self.next()
 
             self.halt_analyzer()
         
@@ -1103,8 +1117,31 @@ class SyntaxSemanticAnalyzer:
 
     def function_call(self):
         if self.expect("I IZ"):
-            if self.function_identifier() and self.arguments() and self.expect("MKAY") and self.end_of_line():
-                return True
+            if self.function_identifier() and self.arguments():
+                
+                if self.current_function in self.function_references: 
+                    caller_position = self.position 
+                    function_reference = self.function_references[self.current_function]
+                    print(f"{self.current_function}")
+                    print(f"{function_reference}")
+                    print(f"{self.tokens[function_reference[0]]}")
+                    if len(self.current_arguments) + 1 == len(function_reference):
+                        
+                        self.position = function_reference[0]
+                        symbol_table_holder = self.symbol_table
+                        self.symbol_table = {}
+                        for i in range(1, len(function_reference)):
+                            self.symbol_table[function_reference[i]] = self.current_arguments[i - 1]
+                        print(f"{self.position}")
+                        print("oi")    
+                        if self.function_body():
+                            self.position = caller_position
+                            self.symbol_table = symbol_table_holder
+                            self.current_function = None
+                            self.current_arguments = None
+                            print(f"{self.position}")
+                            if self.expect("MKAY") and self.end_of_line():
+                                return True
 
             self.halt_analyzer()
         
@@ -1112,8 +1149,10 @@ class SyntaxSemanticAnalyzer:
 
     def parameters(self):
         if self.expect("YR"):
-            if self.variable_identifier() and self.extra_parameters():
-                return True
+            if self.variable_identifier():
+                self.function_references[self.current_function].append(self.current_variable)
+                if self.extra_parameters():
+                    return True
 
             self.halt_analyzer()
         
@@ -1121,8 +1160,10 @@ class SyntaxSemanticAnalyzer:
 
     def extra_parameters(self):
         if self.expect("AN"):
-            if self.expect("YR") and self.variable_identifier() and self.extra_parameters():
-                return True
+            if self.expect("YR") and self.variable_identifier():
+                self.function_references[self.current_function].append(self.current_variable)
+                if self.extra_parameters():
+                    return True
 
             self.halt_analyzer()
         
@@ -1130,8 +1171,11 @@ class SyntaxSemanticAnalyzer:
 
     def arguments(self):
         if self.expect("YR"):
-            if self.value() and self.extra_arguments():
-                return True
+            self.current_arguments = []
+            if self.value():
+                self.current_arguments.append(self.current_value)
+                if self.extra_arguments():
+                    return True
 
             self.halt_analyzer()
         
@@ -1139,8 +1183,10 @@ class SyntaxSemanticAnalyzer:
 
     def extra_arguments(self):
         if self.expect("AN"):
-            if self.expect("YR") and self.value() and self.extra_arguments():
-                return True
+            if self.expect("YR") and self.value():
+                self.current_arguments.append(self.current_value)
+                if self.extra_arguments():
+                    return True
 
             self.halt_analyzer()
         
@@ -1153,7 +1199,7 @@ class SyntaxSemanticAnalyzer:
 
             self.halt_analyzer()
         
-        if self.expect("GTFO"):
+        elif self.expect("GTFO"):
             if self.end_of_line():
                 return True
 
@@ -1165,7 +1211,7 @@ class SyntaxSemanticAnalyzer:
         if self.statement() and self.function_body():
             return True
         
-        if self.return_function() and self.function_body():
+        if self.return_function():
             return True
         
         return self.expect("")
@@ -1196,6 +1242,7 @@ class SyntaxSemanticAnalyzer:
 
     def function_identifier(self):
         if self.expect("varident"):
+            self.current_function = self.previous_token()
             return True
         
         return False
