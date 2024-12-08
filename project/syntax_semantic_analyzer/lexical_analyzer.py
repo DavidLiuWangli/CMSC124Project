@@ -86,8 +86,8 @@ def lexical_analyzer(code):
                         if word_type == "BTW":
                             tokens.append(("BTW", "BTW", line_number))
 
-                            if len(current) > 3:
-                                tokens.append((current[3:], "text", line_number))
+                            if len(current) > 4:
+                                tokens.append((current[4:], "text", line_number))
                         else:
                             tokens.append((current, word_type, line_number))
                         

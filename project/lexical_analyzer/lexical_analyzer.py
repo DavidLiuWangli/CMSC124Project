@@ -12,7 +12,6 @@ def lexical_analyzer(code):
         
         # Handle empty lines
         if line == "":
-            tokens.append(("\\n", "Linebreak"))
             line_number += 1
             continue
 
@@ -84,11 +83,15 @@ def lexical_analyzer(code):
                     regex = re.compile(pattern)
 
                     if regex.fullmatch(current):
-                        if word_type == "BTW":
+                        if word_type == "String Literal":
+                            tokens.append(("\"", "String Delimiter"))
+                            tokens.append((current[1:-1], "String Literal"))
+                            tokens.append(("\"", "String Delimiter"))
+                        elif word_type == "Comment":
                             tokens.append(("BTW", "Comment Keyword"))
 
-                            if len(current) > 3:
-                                tokens.append((current[3:], "Comment Text"))
+                            if len(current) > 4:
+                                tokens.append((current[4:], "Comment Text"))
                         else:
                             tokens.append((current, word_type))
                         
@@ -105,6 +108,5 @@ def lexical_analyzer(code):
                 return tokens
 
         line_number += 1
-        tokens.append(("\\n", "Linebreak"))
     
     return tokens
