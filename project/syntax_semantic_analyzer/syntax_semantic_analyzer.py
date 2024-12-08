@@ -61,6 +61,10 @@ class SyntaxSemanticAnalyzer:
         self.file_name = file_name
         self.execute = [True]
         self.previous = []
+        self.loop_director = 1
+        self.loop_negate = False
+        self.loop_conditioner = False
+        self.loop_checkpoint = 1
         self.program()
 
     def halt_analyzer(self, error_message=None):
@@ -1007,7 +1011,7 @@ class SyntaxSemanticAnalyzer:
             if not has_variable:
                 condition = self.access_symbol["IT"]
                 self.previous.append(False)
-                self.execute.append(self.execute[-1] and (not self.previous[-1])
+                self.execute.append(self.execute[-1] and (not self.previous[-1]))
 
             if self.end_of_line() and self.cases_chain() and self.default_case_block() and self.expect("OIC") and self.end_of_line():
                 return True
@@ -1059,10 +1063,18 @@ class SyntaxSemanticAnalyzer:
                     if self.expect("YR"):
                         if self.variable_identifier():
                             if self.loop_condition():
-                                if self.end_of_line() and self.control_body():
-                                    if self.expect("IM OUTTA YR") and self.loop_identifier():
-                                        if self.end_of_line():
-                                            return True
+                                if self.end_of_line():
+                                    self.loop_checkpoint = self.position
+                                    self.update_loop_conditioner(self.loop_negate)
+                                    if self.control_body():
+                                        if self.loop_conditioner:
+                                            self.position = self.loop_checkpoint
+                                            self.control_body()
+                                            return
+                                        else:
+                                            if self.expect("IM OUTTA YR") and self.loop_identifier():
+                                                if self.end_of_line():
+                                                    return True
 
             self.halt_analyzer()
         
@@ -1070,25 +1082,30 @@ class SyntaxSemanticAnalyzer:
     
     def loop_direction(self):
         if self.expect("UPPIN"):
+            self.loop_director = 1
             return True
         
         if self.expect("NERFIN"):
+            self.loop_director = -1
             return True
         
         return False
+    
+    def update_loop_conditioner(self, negate):
+        if self.expression():
+                self.loop_conditioner = self.current_expression if not negate else not self.current_expression
+                return True
+        self.halt_analyzer()
+
+
 
     def loop_condition(self):
         if self.expect("TIL"):
-            if self.expression():
-                return True
-
-            self.halt_analyzer()
+            self.update_loop_conditioner(self.loop_negate)
         
         if self.expect("WILE"):
-            if self.expression():
-                return True
-
-            self.halt_analyzer()
+            self.loop_negate = True
+            self.update_loop_conditioner(self.loop_negate)
         
         return False
 
