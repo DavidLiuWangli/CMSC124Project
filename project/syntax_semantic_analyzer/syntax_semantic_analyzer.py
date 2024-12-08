@@ -1082,26 +1082,45 @@ class SyntaxSemanticAnalyzer:
         return self.expect("")
 
     def loop_block(self):
+        loop_block_position = self.position
+
         if self.expect("IM IN YR"):
             if self.loop_identifier():
                 if self.loop_direction():
+                    direction = self.current_direction
+
                     if self.expect("YR"):
                         if self.variable_identifier():
+                            increment_variable = self.current_variable
+
                             if self.loop_condition():
+                                condition = self.current_loop_condition
+                                self.previous.append(False)
+                                self.execute.append(self.execute[-1] and condition)
+
                                 if self.end_of_line() and self.control_body():
-                                    if self.expect("IM OUTTA YR") and self.loop_identifier():
-                                        if self.end_of_line():
-                                            return True
+                                    
+                                    if self.expect("IM OUTTA YR") and self.loop_identifier() and self.end_of_line():
+                                        if self.can_execute():
+                                            self.modify_symbol(increment_variable, self.access_symbol(increment_variable) + direction)
+                                            self.position = loop_block_position
+                                            self.loop_block()
+
+                                        self.previous.pop()
+                                        self.execute.pop()
+                                        return True
 
             self.halt_analyzer()
-        
+ 
         return False
     
     def loop_direction(self):
         if self.expect("UPPIN"):
+            self.current_direction = +1
             return True
         
         if self.expect("NERFIN"):
+            self.current_direction = -1
             return True
         
         return False
@@ -1109,12 +1128,14 @@ class SyntaxSemanticAnalyzer:
     def loop_condition(self):
         if self.expect("TIL"):
             if self.expression():
+                self.current_loop_condition = not self.current_expression
                 return True
 
             self.halt_analyzer()
         
         if self.expect("WILE"):
             if self.expression():
+                self.current_loop_condition = self.current_expression
                 return True
 
             self.halt_analyzer()
@@ -1163,8 +1184,7 @@ class SyntaxSemanticAnalyzer:
                             self.position = caller_position
                             return_value = self.access_symbol("IT")
                             self.symbol_table = symbol_table_holder
-                            if return_value != None:
-                                self.modify_symbol("IT", return_value)
+                            self.modify_symbol("IT", return_value)
                             self.current_function = None
                             self.current_arguments = None
                             
@@ -1228,8 +1248,9 @@ class SyntaxSemanticAnalyzer:
 
             self.halt_analyzer()
         
-        elif self.expect("GTFO"):
+        if self.expect("GTFO"):
             if self.end_of_line():
+                self.modify_symbol("IT", None)
                 return True
 
             self.halt_analyzer()
@@ -1243,6 +1264,7 @@ class SyntaxSemanticAnalyzer:
         if self.return_function():
             return True
         
+        self.modify_symbol("IT", None)
         return self.expect("")
 
     def end_of_line(self):
