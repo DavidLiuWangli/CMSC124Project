@@ -5,6 +5,7 @@ from tkinter import scrolledtext
 from widgets.widget import Widget
 from widgets.ui_elements import create_styled_label, create_styled_button
 import os
+import sys
 
 class Text_Editor(Widget):
     def __init__(self, root):
@@ -68,8 +69,15 @@ class Text_Editor(Widget):
         self.line_numbers.yview(*args)
 
     def on_mouse_wheel(self, event):
-        current_fraction = self.text_area.yview()[0]
-        new_fraction = current_fraction + (-1 * (event.delta // 120)) / 100
+        delta = 0
+        if sys.platform.startswith("linux"):
+            if event.num == 4:  # Scroll up
+                delta = -1
+            elif event.num == 5:  # Scroll down
+                delta = 1
+        else:
+            delta = -1 * (event.delta // 120)
+        new_fraction = self.text_area.yview()[0] + delta / 100
         self.text_area.yview_moveto(new_fraction)
         self.line_numbers.yview_moveto(new_fraction)
     
