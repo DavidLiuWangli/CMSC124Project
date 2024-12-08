@@ -62,6 +62,7 @@ class SyntaxSemanticAnalyzer:
         self.execute = [True]
         self.previous = []
         self.loop_director = 1
+        self.loop_index = ""
         self.loop_negate = False
         self.loop_conditioner = False
         self.loop_checkpoint = 1
@@ -1062,19 +1063,18 @@ class SyntaxSemanticAnalyzer:
                 if self.loop_direction():
                     if self.expect("YR"):
                         if self.variable_identifier():
+                            self.loop_index = self.current_variable
                             if self.loop_condition():
                                 if self.end_of_line():
                                     self.loop_checkpoint = self.position
-                                    self.update_loop_conditioner(self.loop_negate)
-                                    if self.control_body():
-                                        if self.loop_conditioner:
+                                    while self.loop_conditioner:
+                                        if self.control_body():
                                             self.position = self.loop_checkpoint
-                                            self.control_body()
-                                            return
-                                        else:
-                                            if self.expect("IM OUTTA YR") and self.loop_identifier():
-                                                if self.end_of_line():
-                                                    return True
+                                            self.modify_symbol(self.loop_index, self.access_symbol(self.loop_index) + (1*self.loop_director))
+                                            self.update_loop_conditioner(self.loop_negate)
+                                    if self.expect("IM OUTTA YR") and self.loop_identifier():
+                                        if self.end_of_line():
+                                            return True
 
             self.halt_analyzer()
         
