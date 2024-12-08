@@ -17,12 +17,12 @@ def lexical_analyzer(code):
 
         # Handle multi-line comments
         if line.startswith("OBTW"):
-            tokens.append(("OBTW", "OBTW"))
+            tokens.append(("OBTW", "OBTW", line_number))
             
             if len(line) > 4:
-                tokens.append((line[4:], "text"))
+                tokens.append((line[4:], "text", line_number))
              
-            tokens.append(("\\n", "linebreak"))
+            tokens.append(("\\n", "linebreak", line_number))
 
             line_number += 1
             
@@ -32,8 +32,8 @@ def lexical_analyzer(code):
             line = lines[line_number].strip()
 
             while line_number < len(lines) and not line.endswith("TLDR"):
-                tokens.append((line, "text"))
-                tokens.append(("\\n", "linebreak"))
+                tokens.append((line, "text", line_number))
+                tokens.append(("\\n", "linebreak", line_number))
                 line_number += 1
 
                 if line_number == len(lines):
@@ -43,9 +43,9 @@ def lexical_analyzer(code):
 
             if line.endswith("TLDR"):
                 if len(line) > 4:
-                    tokens.append((line[:-4], "text"))
-                tokens.append(("TLDR", "TLDR"))
-                tokens.append(("\\n", "linebreak"))
+                    tokens.append((line[:-4], "text", line_number))
+                tokens.append(("TLDR", "TLDR", line_number))
+                tokens.append(("\\n", "linebreak", line_number))
             else:
                 raise Exception("TLDR not found")
 
@@ -84,12 +84,12 @@ def lexical_analyzer(code):
 
                     if regex.fullmatch(current):
                         if word_type == "BTW":
-                            tokens.append(("BTW", "BTW"))
+                            tokens.append(("BTW", "BTW", line_number))
 
                             if len(current) > 3:
-                                tokens.append((current[3:], "text"))
+                                tokens.append((current[3:], "text", line_number))
                         else:
-                            tokens.append((current, word_type))
+                            tokens.append((current, word_type, line_number))
                         
                         matched = True
                         i = j + 1
@@ -103,7 +103,7 @@ def lexical_analyzer(code):
                 print("BAD TOKEN")
                 return tokens
 
+        tokens.append(("\\n", "linebreak", line_number))
         line_number += 1
-        tokens.append(("\\n", "linebreak"))
         
     return tokens

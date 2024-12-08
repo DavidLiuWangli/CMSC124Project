@@ -63,6 +63,13 @@ class SyntaxSemanticAnalyzer:
         self.previous = []
         self.program()
 
+    def halt_analyzer(self):
+        line_position = self.tokens[0][2]
+        self.console.update_table(self.symbol_table)
+        self.console.log(f"{self.file_name}:{self.current_token()[2]} Unexpected token: {self.unexpected_token}")
+        del self
+        raise Exception()
+
     def can_execute(self):
         return self.execute and self.execute[-1]
 
@@ -94,16 +101,17 @@ class SyntaxSemanticAnalyzer:
             return True
 
         self.last_expected = token_type
-        
+         
         if token_type == "":
             # print("Skipping token")
             return True
         elif self.current_token() and self.tokens[self.position][1] == token_type:
-            # print(f"Successfully matched {self.current_token()} with {token}")
+            print(f"Successfully matched {self.current_token()} with {token_type}")
             self.next()
             return True
         else:
-            # print(f"Unsuccessful match {self.current_token()} with {token}")
+            print(f"Unsuccessful match {self.current_token()} with {token_type}")
+            
             if self.current_token():
                 self.unexpected_token = self.current_token()[0]
             else:
@@ -116,18 +124,7 @@ class SyntaxSemanticAnalyzer:
             self.console.update_table(self.symbol_table)
             self.console.log(f"Completed {self.file_name}")
             return
-        
-        line_number = 0
-        lines = self.code.split('\n')
-
-        for number, line in enumerate(lines, start=1):
-            if self.unexpected_token in line:
-                line_number = number
-                break
-        
-        self.console.update_table(self.symbol_table)
-        self.console.log(f"{self.file_name}:{line_number} Unexpected token: {self.unexpected_token}")
-
+         
     def outsides(self):
         if self.outside() and self.outsides():
             return True
@@ -164,12 +161,19 @@ class SyntaxSemanticAnalyzer:
         
         if self.variable_identifier():
             self.variable_starting = self.previous_token()
-            
+
             if self.variable_starting_statement():
                 return True
+
+            self.halt_analyzer()
         
-        if self.expect("IT") and self.variable_assignment():
-            return True
+        if self.expect("IT"):
+            self.variable_starting = self.previous_token()
+
+            if self.variable_assignment():
+                return True
+
+            self.halt_analyzer()
         
         if self.switch_case_block():
             return True
@@ -201,14 +205,20 @@ class SyntaxSemanticAnalyzer:
         return False
 
     def comment(self):
-        if self.expect("BTW") and self.comment_text() and self.expect("linebreak"):
-            return True
+        if self.expect("BTW"):
+            if self.comment_text() and self.expect("linebreak"):
+                return True
+
+            self.halt_analyzer()
         
         return False
 
     def multi_line_comment(self):
-        if self.expect("OBTW") and self.comment_text() and self.expect("linebreak") and self.multi_content() and self.comment_text() and self.expect("TLDR") and self.end_of_line():
-            return True
+        if self.expect("OBTW"):
+            if self.comment_text() and self.expect("linebreak") and self.multi_content() and self.comment_text() and self.expect("TLDR") and self.end_of_line():
+                return True
+
+            self.halt_analyzer()
         
         return False
 
@@ -219,29 +229,41 @@ class SyntaxSemanticAnalyzer:
         return self.expect("")
 
     def data_section(self):
-        if self.expect("WAZZUP") and self.end_of_line() and self.declarations() and self.expect("BUHBYE") and self.end_of_line():
-            return True
+        if self.expect("WAZZUP"):
+            if self.end_of_line() and self.declarations() and self.expect("BUHBYE") and self.end_of_line():
+                return True
+
+            self.halt_analzyer()
         
         return self.expect("")
 
     def declarations(self):
-        if self.expect("I HAS A") and self.variable_identifier():
-            declaration_variable = self.current_variable
+        if self.expect("I HAS A"):
+            if self.variable_identifier():
+                declaration_variable = self.current_variable
 
-            if self.initialization():
-                self.symbol_table[declaration_variable] = self.current_value
+                if self.initialization():
+                    self.symbol_table[declaration_variable] = self.current_value
                 
-                if self.end_of_line() and self.declarations():
-                    return True
+                    if self.end_of_line() and self.declarations():
+                        return True
+
+            self.halt_analyzer()
         
         if self.end_of_line() and self.declarations():
+            return True
+
+        if self.multi_line_comment() and self.expect("linebreak") and self.declarations():
             return True
         
         return self.expect("")
 
     def initialization(self):
-        if self.expect("ITZ") and self.value():
-            return True
+        if self.expect("ITZ"):
+            if self.value():
+                return True
+
+            self.halt_analyzer()
         
         self.current_value = None
         return self.expect("")
@@ -316,40 +338,52 @@ class SyntaxSemanticAnalyzer:
         return False
 
     def input(self):
-        if self.expect("GIMMEH") and self.variable_identifier():
-            current_variable = self.current_variable
+        if self.expect("GIMMEH"):
+            if self.variable_identifier():
+                current_variable = self.current_variable
 
-            if self.end_of_line():
-                if self.execute and self.execute[-1]:
-                    self.symbol_table[current_variable] = self.console.get_input(self.symbol_table)
-                return True
+                if self.end_of_line():
+                    if self.execute and self.execute[-1]:
+                        self.symbol_table[current_variable] = self.console.get_input(self.symbol_table)
+                    return True
+
+            self.halt_analyzer()
         
-        if self.expect("GIMMEH") and self.expect("IT") and self.end_of_line():
-            if self.execute and self.execute[-1]:
-                self.symbol_table["IT"] = self.console.get_input(self.symbol_table)
+        if self.expect("GIMMEH"):
+            if self.expect("IT") and self.end_of_line():
+                if self.execute and self.execute[-1]:
+                    self.symbol_table["IT"] = self.console.get_input(self.symbol_table)
             
-            return True
+                return True
+
+            self.halt_analyzer()
         
         return False
 
     def output(self):
-        if self.expect("VISIBLE") and self.operand():
-            self.current_output_string = typecast_string(self.current_operand)
+        if self.expect("VISIBLE"):
+            if self.operand():
+                self.current_output_string = typecast_string(self.current_operand)
 
-            if self.output_operands() and self.end_of_line():
-                if self.execute and self.execute[-1]:
-                    self.console.log(self.current_output_string)
+                if self.output_operands() and self.end_of_line():
+                    if self.execute and self.execute[-1]:
+                        self.console.log(self.current_output_string)
                 
-                return True
+                    return True
+
+            self.halt_analyzer()
         
         return False
 
     def output_operands(self):
-        if self.expect("+") and self.operand():
-            self.current_output_string += typecast_string(self.current_operand)
+        if self.expect("+"):
+            if self.operand():
+                self.current_output_string += typecast_string(self.current_operand)
             
-            if self.output_operands():
-                return True
+                if self.output_operands():
+                    return True
+
+            self.halt_analzyer()
         
         return self.expect("")
 
@@ -416,6 +450,8 @@ class SyntaxSemanticAnalyzer:
                     self.current_math_expression = arithmetic_operation(operator, operand_1, operand_2) 
                     return True
 
+            self.halt_analyzer()
+
         return False
 
     def math_operator(self):
@@ -460,10 +496,15 @@ class SyntaxSemanticAnalyzer:
                         self.current_boolean_expression = operand_1 ^ operand_2
 
                     return True
+
+            self.halt_analyzer()
         
-        if self.expect("NOT") and self.operand():
-            self.current_boolean_expression = not bool(self.current_operand)
-            return True
+        if self.expect("NOT"):
+            if self.operand():
+                self.current_boolean_expression = not bool(self.current_operand)
+                return True
+
+            self.halt_analyzer()
         
         return False
 
@@ -480,11 +521,14 @@ class SyntaxSemanticAnalyzer:
         return False
     
     def concatenation(self):
-        if self.expect("SMOOSH") and self.concatenation_operand():
-            self.current_concatenation = typecast_string(self.current_concatenation_operand) 
+        if self.expect("SMOOSH"):
+            if self.concatenation_operand():
+                self.current_concatenation = typecast_string(self.current_concatenation_operand) 
             
-            if self.concatenation_operands():
-                return True
+                if self.concatenation_operands():
+                    return True
+
+            self.halt_analyzer()
 
         return False
 
@@ -539,11 +583,14 @@ class SyntaxSemanticAnalyzer:
         return False
  
     def concatenation_operands(self):
-        if self.expect("AN") and self.concatenation_operand():
-            self.current_concatenation += typecast_string(self.current_concatenation_operand)
+        if self.expect("AN"):
+            if self.concatenation_operand():
+                self.current_concatenation += typecast_string(self.current_concatenation_operand)
             
-            if self.concatenation_operands():
-                return True
+                if self.concatenation_operands():
+                    return True
+
+            self.halt_analyzer()
         
         return self.expect("")
 
@@ -563,6 +610,8 @@ class SyntaxSemanticAnalyzer:
                     operand_2 = math_operand_re_cast(operand_2, type_2)
                     arithmetic_operation(operator, operand_1, operand_2)
                     return True
+
+            self.halt_analyzer()
         
         return False
 
@@ -584,10 +633,15 @@ class SyntaxSemanticAnalyzer:
                         self.current_concatenation_boolean = operand_1 ^ operand_2
 
                     return True
+
+            self.halt_analyzer()
         
-        if self.expect("NOT") and self.concatenation_operand():
-            self.current_concatenation_boolean = not bool(self.current_concatenation_operand)
-            return True
+        if self.expect("NOT"):
+            if self.concatenation_operand():
+                self.current_concatenation_boolean = not bool(self.current_concatenation_operand)
+                return True
+
+            self.halt_analyzer()
 
         return False
 
@@ -607,6 +661,8 @@ class SyntaxSemanticAnalyzer:
                         self.concatenation_comparison = operand_1 != operand_2
                     
                     return True
+
+            self.halt_analyzer()
         
         return False
 
@@ -628,6 +684,8 @@ class SyntaxSemanticAnalyzer:
                         self.current_comparison_expression = (operand_1 != operand_2)
                     
                     return True
+
+            self.halt_analyzer()
         
         return False
 
@@ -658,6 +716,8 @@ class SyntaxSemanticAnalyzer:
 
                 if self.all_any_operands() and self.expect("MKAY"):
                     return True
+
+            self.halt_analyzer()
         
         return False
 
@@ -673,16 +733,19 @@ class SyntaxSemanticAnalyzer:
         return False
     
     def all_any_operands(self):
-        if self.expect("AN") and self.all_any_operand():
-            operand = bool(self.current_all_any_operand)
+        if self.expect("AN"):
+            if self.all_any_operand():
+                operand = bool(self.current_all_any_operand)
 
-            if self.current_all_any_operator == "ALL OF":
-                self.current_all_any_expression = self.current_all_any_expression and operand
-            elif self.current_all_any_operator == "ANY OF":
-                self.current_all_any_expression = self.current_all_any_expression or operand
+                if self.current_all_any_operator == "ALL OF":
+                    self.current_all_any_expression = self.current_all_any_expression and operand
+                elif self.current_all_any_operator == "ANY OF":
+                    self.current_all_any_expression = self.current_all_any_expression or operand
 
-            if self.all_any_operands():
-                return True
+                if self.all_any_operands():
+                    return True
+
+            self.halt_analyzer()
 
         return self.expect("")
 
@@ -752,6 +815,8 @@ class SyntaxSemanticAnalyzer:
                     operand_2 = math_operand_re_cast(operand_2, type_2)
                     arithmetic_operation(operator, operand_1, operand_2)
                     return True
+
+            self.halt_analyzer()
         
         return False
 
@@ -773,10 +838,15 @@ class SyntaxSemanticAnalyzer:
                         self.current_all_any_boolean = operand_1 ^ operand_2
 
                     return True
+
+            self.halt_analyzer()
         
-        if self.expect("NOT") and self.all_any_operand():
-            self.current_all_any_boolean = not bool(self.current_all_any_operand)
-            return True
+        if self.expect("NOT"):
+            if self.all_any_operand():
+                self.current_all_any_boolean = not bool(self.current_all_any_operand)
+                return True
+
+            self.halt_analyzer()
 
         return False
 
@@ -796,23 +866,28 @@ class SyntaxSemanticAnalyzer:
                         self.all_any_comparison = operand_1 != operand_2
                     
                     return True
+
+            self.halt_analyzer()
         
         return False
 
     def typecasting(self):
-        if self.expect("MAEK") and self.variable_identifier() and self.typecasting_separator() and self.expect("type"):
-            self.current_type_literal = self.previous_token()
+        if self.expect("MAEK"):
+            if self.variable_identifier() and self.typecasting_separator() and self.expect("type"):
+                self.current_type_literal = self.previous_token()
 
-            if self.current_type_literal == "TROOF":
-                self.current_typecasting = bool(self.symbol_table[self.current_variable])
-            elif self.current_type_literal == "NUMBAR":
-                self.current_typecasting = float(self.symbol_table[self.current_variable])
-            elif self.current_type_literal == "NUMBR":
-                self.current_typecasting = int(self.symbol_table[self.current_variable])
-            elif self.current_type_literal == "YARN":
-                self.current_typecasting = typecast_string(self.symbol_table[self.current_variable])
+                if self.current_type_literal == "TROOF":
+                    self.current_typecasting = bool(self.symbol_table[self.current_variable])
+                elif self.current_type_literal == "NUMBAR":
+                    self.current_typecasting = float(self.symbol_table[self.current_variable])
+                elif self.current_type_literal == "NUMBR":
+                    self.current_typecasting = int(self.symbol_table[self.current_variable])
+                elif self.current_type_literal == "YARN":
+                    self.current_typecasting = typecast_string(self.symbol_table[self.current_variable])
 
-            return True
+                return True
+
+            self.halt_analyzer()
         
         return False
 
@@ -823,32 +898,37 @@ class SyntaxSemanticAnalyzer:
         return self.expect("")
 
     def re_casting(self):
-        if self.expect("IS NOW A") and self.expect("type"):
-            self.current_type_literal = self.previous_token()
+        if self.expect("IS NOW A"):
+            if self.expect("type"):
+                self.current_type_literal = self.previous_token()
             
-            if self.execute and self.execute[-1]:
-                if self.current_type_literal == "TROOF":
-                    self.symbol_table[self.current_variable] = bool(self.symbol_table[self.current_variable])
-                elif self.current_type_literal == "NUMBAR":
-                    self.symbol_table[self.current_variable] = float(self.symbol_table[self.current_variable])
-                elif self.current_type_literal == "NUMBR":
-                    self.symbol_table[self.current_variable] = int(self.symbol_table[self.current_variable])
-                elif self.current_type_literal == "YARN":
-                    self.symbol_table[self.current_variable] = typecast_string(self.symbol_table[self.current_variable])
+                if self.execute and self.execute[-1]:
+                    if self.current_type_literal == "TROOF":
+                        self.symbol_table[self.current_variable] = bool(self.symbol_table[self.current_variable])
+                    elif self.current_type_literal == "NUMBAR":
+                        self.symbol_table[self.current_variable] = float(self.symbol_table[self.current_variable])
+                    elif self.current_type_literal == "NUMBR":
+                        self.symbol_table[self.current_variable] = int(self.symbol_table[self.current_variable])
+                    elif self.current_type_literal == "YARN":
+                        self.symbol_table[self.current_variable] = typecast_string(self.symbol_table[self.current_variable])
 
-            if self.end_of_line():
-                return True
+                if self.end_of_line():
+                    return True
+
+            self.halt_analyzer()
         
         return False
 
     def variable_assignment(self):
-        if self.expect("R") and self.value():
-            if self.execute and self.execute[-1]:
-                self.symbol_table[self.variable_starting] = self.current_value 
-            if self.end_of_line():
-                return True
+        if self.expect("R"):
+            if self.value():
+                if self.execute and self.execute[-1]:
+                    self.symbol_table[self.variable_starting] = self.current_value 
             
-            return True
+                if self.end_of_line():
+                    return True
+
+            self.halt_analyzer()
         
         return False
 
@@ -867,6 +947,8 @@ class SyntaxSemanticAnalyzer:
                     self.previous.pop()
                     self.execute.pop()
                     return True
+
+            self.halt_analyzer()
         
         return False
 
@@ -877,27 +959,36 @@ class SyntaxSemanticAnalyzer:
         return self.expect("")
 
     def else_if_block(self):
-        if self.expect("MEBBE") and self.expression():
-            condition = self.current_expression
-            self.symbol_table["IT"] = self.current_expression
-            self.execute[-1] = self.execute[-2] and (not self.previous[-1]) and self.symbol_table["IT"]
+        if self.expect("MEBBE"):
+            if self.expression():
+                condition = self.current_expression
+                self.symbol_table["IT"] = self.current_expression
+                self.execute[-1] = self.execute[-2] and (not self.previous[-1]) and self.symbol_table["IT"]
 
-            if self.end_of_line() and self.statements():
-                self.previous[-1] = self.previous[-1] or self.execute[-1]
-                self.execute[-1] = self.execute[-2] and (not self.previous[-1])
-                return True
+                if self.end_of_line() and self.statements():
+                    self.previous[-1] = self.previous[-1] or self.execute[-1]
+                    self.execute[-1] = self.execute[-2] and (not self.previous[-1])
+                    return True
+
+            self.halt_analyzer()
         
         return False
 
     def else_block(self):
-        if self.expect("NO WAI") and self.end_of_line() and self.statements():
-            return True
+        if self.expect("NO WAI"):
+            if self.end_of_line() and self.statements():
+                return True
+
+            self.halt_analyzer()
         
         return self.expect("")
 
     def switch_case_block(self):
-        if self.expect("WTF?") and self.end_of_line() and self.cases_chain() and self.default_case_block() and self.expect("OIC") and self.end_of_line():
-            return True
+        if self.expect("WTF?"):
+            if self.end_of_line() and self.cases_chain() and self.default_case_block() and self.expect("OIC") and self.end_of_line():
+                return True
+
+            self.halt_analyzer()
         
         return False
 
@@ -908,20 +999,29 @@ class SyntaxSemanticAnalyzer:
         return self.expect("")
 
     def case_block(self):
-        if self.expect("OMG") and self.literal() and self.end_of_line() and self.control_body():
-            return True
+        if self.expect("OMG"):
+            if self.literal() and self.end_of_line() and self.control_body():
+                return True
+
+            self.halt_analyzer()
         
         return False
 
     def default_case_block(self):
-        if self.expect("OMGWTF") and self.end_of_line() and self.control_body():
-            return True
+        if self.expect("OMGWTF"):
+            if self.end_of_line() and self.control_body():
+                return True
+
+            self.halt_analyzer()
         
         return self.expect("")
 
     def control_body(self):
-        if self.expect("GTFO") and self.end_of_line():
-            return True
+        if self.expect("GTFO"):
+            if self.end_of_line():
+                return True
+
+            self.halt_analyzer()
         
         if self.statement() and self.control_body():
             return True
@@ -929,8 +1029,18 @@ class SyntaxSemanticAnalyzer:
         return self.expect("")
 
     def loop_block(self):
-        if self.expect("IM IN YR") and self.loop_identifier() and self.loop_direction() and self.expect("YR") and self.variable_identifier() and self.loop_condition() and self.end_of_line() and self.control_body() and self.expect("IM OUTTA YR") and self.loop_identifier() and self.end_of_line():
-            return True
+        if self.expect("IM IN YR"):
+            if self.loop_identifier():
+                if self.loop_direction():
+                    if self.expect("YR"):
+                        if self.variable_identifier():
+                            if self.loop_condition():
+                                if self.end_of_line() and self.control_body():
+                                    if self.expect("IM OUTTA YR") and self.loop_identifier():
+                                        if self.end_of_line():
+                                            return True
+
+            self.halt_analyzer()
         
         return False
     
@@ -944,56 +1054,86 @@ class SyntaxSemanticAnalyzer:
         return False
 
     def loop_condition(self):
-        if self.expect("TIL") and self.expression():
-            return True
+        if self.expect("TIL"):
+            if self.expression():
+                return True
+
+            self.halt_analyzer()
         
-        if self.expect("WILE") and self.expression():
-            return True
+        if self.expect("WILE"):
+            if self.expression():
+                return True
+
+            self.halt_analyzer()
         
         return False
 
     def function(self):
-        if self.expect("HOW IZ I") and self.function_identifier() and self.parameters() and self.end_of_line() and self.function_body() and self.expect("IF U SAY SO") and self.end_of_line():
-            return True
+        if self.expect("HOW IZ I"):
+            if self.function_identifier() and self.parameters() and self.end_of_line() and self.function_body() and self.expect("IF U SAY SO") and self.end_of_line():
+                return True
+
+            self.halt_analyzer()
         
         return False
 
     def function_call(self):
-        if self.expect("I IZ") and self.function_identifier() and self.arguments() and self.expect("MKAY") and self.end_of_line():
-            return True
+        if self.expect("I IZ"):
+            if self.function_identifier() and self.arguments() and self.expect("MKAY") and self.end_of_line():
+                return True
+
+            self.halt_analyzer()
         
         return False
 
     def parameters(self):
-        if self.expect("YR") and self.variable_identifier() and self.extra_parameters():
-            return True
+        if self.expect("YR"):
+            if self.variable_identifier() and self.extra_parameters():
+                return True
+
+            self.halt_analyzer()
         
         return self.expect("")
 
     def extra_parameters(self):
-        if self.expect("AN") and self.expect("YR") and self.variable_identifier() and self.extra_parameters():
-            return True
+        if self.expect("AN"):
+            if self.expect("YR") and self.variable_identifier() and self.extra_parameters():
+                return True
+
+            self.halt_analyzer()
         
         return self.expect("")
 
     def arguments(self):
-        if self.expect("YR") and self.value() and self.extra_arguments():
-            return True
+        if self.expect("YR"):
+            if self.value() and self.extra_arguments():
+                return True
+
+            self.halt_analyzer()
         
         return self.expect("")
 
     def extra_arguments(self):
-        if self.expect("AN") and self.expect("YR") and self.value() and self.extra_arguments():
-            return True
+        if self.expect("AN"):
+            if self.expect("YR") and self.value() and self.extra_arguments():
+                return True
+
+            self.halt_analyzer()
         
         return self.expect("")
 
     def return_function(self):
-        if self.expect("FOUND YR") and self.value() and self.end_of_line():
-            return True
+        if self.expect("FOUND YR"):
+            if self.value() and self.end_of_line():
+                return True
+
+            self.halt_analyzer()
         
-        if self.expect("GTFO") and self.end_of_line():
-            return True
+        if self.expect("GTFO"):
+            if self.end_of_line():
+                return True
+
+            self.halt_analyzer()
         
         return False
 

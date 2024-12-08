@@ -1,6 +1,8 @@
 import re
 
 REGEX_TOKENS = {
+    'IT': r'^IT$',
+
     # Separators
     '+': r'^\+$',
     'AN': r'^AN$', 
