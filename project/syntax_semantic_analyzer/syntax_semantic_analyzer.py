@@ -59,6 +59,7 @@ class SyntaxSemanticAnalyzer:
         self.code = code
         self.console = console
         self.file_name = file_name
+        self.current_ending = ""
         self.execute = [True]
         self.previous = []
         self.function_references = {}
@@ -387,7 +388,7 @@ class SyntaxSemanticAnalyzer:
 
                 if self.output_operands() and self.ending() and self.end_of_line():
                     if self.execute and self.execute[-1]:
-                        self.console.log(self.current_output_string)
+                        self.console.log(self.current_output_string, self.current_ending)
                 
                     return True
 
@@ -399,7 +400,7 @@ class SyntaxSemanticAnalyzer:
         if self.expect("!"):
             self.current_ending = "!"
             return True
-
+        
         self.current_ending = ""
         return self.expect("")
 

@@ -49,9 +49,11 @@ class Console(Widget):
         self.log(f"Running {file_name}")
         syntax_semantic_analyzer(code, self, file_name)
     
-    def log(self, text=""):
+    def log(self, text="", break_indicator=""):
         self.text_area.config(state="normal")
-        self.text_area.insert(tk.END, f"{text}\n")
+        self.text_area.insert(tk.END, f"{text}")
+        if break_indicator == "":
+            self.text_area.insert(tk.END, "\n")
         self.text_area.mark_set("insert", "end")
         self.text_area.see("insert")
         self.text_area.config(state="disabled")

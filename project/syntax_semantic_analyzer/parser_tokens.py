@@ -55,6 +55,7 @@ REGEX_TOKENS = {
     # Input/Output
     'VISIBLE': r'^VISIBLE$',
     'GIMMEH': r'^GIMMEH$',
+    '!': r'^!$',
 
     # Conditionals
     'O RLY?': r'^O RLY\?$',

@@ -55,6 +55,7 @@ REGEX_TOKENS = {
     # Input/Output
     'Console Output': r'^VISIBLE$',
     'Console Input': r'^GIMMEH$',
+    'Newline Suppressor': r'^!$',
 
     # Conditionals
     'If Keyword': r'^O RLY\?$',
