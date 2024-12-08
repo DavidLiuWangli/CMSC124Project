@@ -55,3 +55,32 @@ Ensure you have the following installed:
    ```bash
    python project/main.py
    ```
+
+## 💻 Usage
+
+### Text Editor
+- Write your LOLCODE scripts in the **Text Editor** section.  
+- Save your work using the provided options.  
+
+### Console
+- Displays runtime output and accepts user input when the LOLCODE program requires it.  
+
+### Lexemes Table
+- Shows the lexical tokens identified during the interpretation process.  
+- Useful for debugging and understanding how the program interprets your code.  
+
+### Symbol Table
+- Tracks variable declarations, values, and types during runtime.  
+- Provides insight into the program's state at any given time.  
+
+### How to Run Scripts:
+1. Write or load a LOLCODE script in the text editor.  
+2. Click the **Run** button to execute the script.  
+3. View results in the **Console** section and monitor real-time updates in the **Lexemes Table** and **Symbol Table**.  
+
+---
+
+## 📞 Support
+
+For issues or inquiries, feel free to contact **Compiled Nations** at [your-email@example.com](mailto:your-email@example.com).  
+
