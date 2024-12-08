@@ -26,6 +26,18 @@ class Text_Editor(Widget):
         browse_button = create_styled_button(self.header, "Browse File", self.browse_file)
         browse_button.pack(side=tk.RIGHT)
         
+        # Line Numbering
+        self.line_numbers = tk.Text(
+            self.content, 
+            fg="white", 
+            font=("Consolas", 12), 
+            bg="black",
+            insertbackground="white",
+            wrap="none",
+            state="disabled",
+            )
+        self.line_numbers.pack(fill=tk.Y, side=tk.LEFT)
+        
         # Code
         self.text_area = scrolledtext.ScrolledText(
             self.content, 
@@ -34,12 +46,57 @@ class Text_Editor(Widget):
             bg="black",
             insertbackground="white",
             wrap="none",
-            undo=True)
-        self.text_area.bind("<<Modified>>", self.on_text_area_change)
+            undo=True
+            )
         tab_size = font.Font(font=self.text_area["font"]).measure("    ")  # Measure 4 spaces
         self.text_area.config(tabs=(tab_size,))
-        self.text_area.pack(fill=tk.BOTH, side=tk.TOP, expand=True)
+        self.text_area.pack(fill=tk.BOTH, side=tk.RIGHT, expand=True)
+        
+        self.line_numbers.bind("<MouseWheel>", self.on_mouse_wheel)
+        self.update_line_numbers()
+        
+        self.text_area.vbar.config(command=self.on_scroll)
+        self.text_area.bind("<MouseWheel>", self.on_mouse_wheel)
+        self.text_area.bind("<Key>", self.on_key_pressed)
+        self.text_area.bind("<<Modified>>", self.on_text_area_change)
 
+    def on_key_pressed(self, event=None):
+        self.line_numbers.yview_moveto(self.text_area.yview()[0])
+    
+    def on_scroll(self, *args):
+        self.text_area.yview(*args)
+        self.line_numbers.yview(*args)
+
+    def on_mouse_wheel(self, event):
+        current_fraction = self.text_area.yview()[0]
+        new_fraction = current_fraction + (-1 * (event.delta // 120)) / 100
+        self.text_area.yview_moveto(new_fraction)
+        self.line_numbers.yview_moveto(new_fraction)
+    
+    def on_text_area_change(self, event):
+        if "*" not in self.get_file_name():
+            self.set_asterisk_file_name()
+        self.text_area.edit_modified(False)
+        self.update_line_numbers()
+    
+    def update_line_numbers(self, event=None):
+        self.line_numbers.config(state="normal")
+        self.line_numbers.delete("1.0", "end")
+        self.line_numbers.delete(1.0, tk.END)
+
+        num_lines = int(self.text_area.index("end-1c").split(".")[0])
+        line_number_string = "\n".join(str(i) for i in range(1, num_lines + 1)).splitlines()
+        
+        max_length = max(len(line) for line in line_number_string)
+        for line in line_number_string:
+            spaces = ' ' * (max_length - len(line))
+            self.line_numbers.insert(tk.END, spaces + line + '\n')
+        self.line_numbers.delete("end-1c", "end")
+        
+        self.line_numbers.config(width=max_length)
+        self.line_numbers.yview_moveto(self.text_area.yview()[0])
+        self.line_numbers.config(state="disabled")
+    
     def browse_file(self):
         file_path = filedialog.askopenfilename(
             title="Select a LOLCode File",
@@ -92,16 +149,11 @@ class Text_Editor(Widget):
     def set_asterisk_file_name(self):
         self.file_name.config(text="*" + os.path.basename(self.current_file_path))
     
-    def on_text_area_change(self, event):
-        if self.text_area.edit_modified(): 
-            if "*" not in self.get_file_name():
-                self.set_asterisk_file_name()
-            self.text_area.edit_modified(False)
-    
     def set_text_area(self):
         if self.current_file_path:
             with open(self.current_file_path, 'r') as file:
                 code = file.read()
                 self.text_area.delete(1.0, tk.END)
                 self.text_area.insert(tk.END, code)
+            self.update_line_numbers()
             self.text_area.edit_modified(False)

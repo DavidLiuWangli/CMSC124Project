@@ -96,6 +96,9 @@ class SyntaxSemanticAnalyzer:
             self.position += 1
 
     def expect(self, token_type, token_value=None):
+        if token_type == "linebreak":
+            return True
+        
         if token_value == "NOOB" and self.current_token() and self.tokens[self.position][0] == "NOOB":
             self.next()
             return True
@@ -124,7 +127,7 @@ class SyntaxSemanticAnalyzer:
             self.console.update_table(self.symbol_table)
             self.console.log(f"Completed {self.file_name}")
             return
-         
+
     def outsides(self):
         if self.outside() and self.outsides():
             return True
@@ -524,7 +527,7 @@ class SyntaxSemanticAnalyzer:
         if self.expect("SMOOSH"):
             if self.concatenation_operand():
                 self.current_concatenation = typecast_string(self.current_concatenation_operand) 
-            
+                    
                 if self.concatenation_operands():
                     return True
 

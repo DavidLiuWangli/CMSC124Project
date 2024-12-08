@@ -12,6 +12,7 @@ def lexical_analyzer(code):
         
         # Handle empty lines
         if line == "":
+            tokens.append(("\\n", "Linebreak"))
             line_number += 1
             continue
 
