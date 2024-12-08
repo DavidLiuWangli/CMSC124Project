@@ -63,10 +63,8 @@ class SyntaxSemanticAnalyzer:
         self.previous = []
         self.program()
 
-    def previous_type(self, index=-1):
-        if 0 <= self.position + index and self.position + index < len(self.tokens):
-            return self.tokens[self.position + index][1]
-        return None
+    def can_execute(self):
+        return self.execute and self.execute[-1]
 
     def previous_token(self, index=-1):
         if 0 <= self.position + index and self.position + index < len(self.tokens):
@@ -148,14 +146,12 @@ class SyntaxSemanticAnalyzer:
         return False
     
     def statements(self):
-        # print("Entered statments!")
         if self.statement() and self.statements():
             return True
         
         return self.expect("")
 
     def statement(self):
-        # print("Entered statement!")
         if self.comment():
             return True
         
@@ -191,12 +187,10 @@ class SyntaxSemanticAnalyzer:
         
         if self.function():
             return True
-
-        # print("Exiting statement!")
+        
         return False
 
     def variable_starting_statement(self):
-        # print("Entered variable starting!")
         if self.re_casting():
             return True
         
@@ -240,7 +234,6 @@ class SyntaxSemanticAnalyzer:
                 self.symbol_table[declaration_variable] = self.current_value
                 
                 if self.end_of_line() and self.declarations():
-                    # print(self.current_variable, self.current_assign_value)
                     return True
         
         if self.end_of_line() and self.declarations():
@@ -271,6 +264,10 @@ class SyntaxSemanticAnalyzer:
         return False
 
     def literal(self):
+        if self.expect("type", "NOOB"):
+            self.current_literal = None
+            return True
+
         if self.expect("numbr"):
             self.current_literal = int(self.previous_token())
             return True
@@ -289,7 +286,7 @@ class SyntaxSemanticAnalyzer:
             else:
                 self.current_literal = False
             
-            return True
+            return True 
         
         return False
 
@@ -958,7 +955,6 @@ class SyntaxSemanticAnalyzer:
         return False
 
     def function(self):
-        # print("Entered function!")
         if self.expect("HOW IZ I") and self.function_identifier() and self.parameters() and self.end_of_line() and self.function_body() and self.expect("IF U SAY SO") and self.end_of_line():
             return True
         
