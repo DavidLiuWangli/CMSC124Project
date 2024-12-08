@@ -90,8 +90,6 @@ class SyntaxSemanticAnalyzer:
 
     def expect(self, token_type, token_value=None):
         if token_type == "linebreak":
-            while token_type == "linebreak":
-                self.next()
             return True
         
         if token_value == "NOOB" and self.current_token() and self.tokens[self.position][0] == "NOOB":

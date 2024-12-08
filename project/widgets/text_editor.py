@@ -37,7 +37,6 @@ class Text_Editor(Widget):
             state="disabled",
             )
         self.line_numbers.pack(fill=tk.Y, side=tk.LEFT)
-        # self.line_numbers.tag_configure("right", justify="right")
         
         # Code
         self.text_area = scrolledtext.ScrolledText(
@@ -58,8 +57,12 @@ class Text_Editor(Widget):
         
         self.text_area.vbar.config(command=self.on_scroll)
         self.text_area.bind("<MouseWheel>", self.on_mouse_wheel)
+        self.text_area.bind("<Key>", self.on_key_pressed)
         self.text_area.bind("<<Modified>>", self.on_text_area_change)
 
+    def on_key_pressed(self, event=None):
+        self.line_numbers.yview_moveto(self.text_area.yview()[0])
+    
     def on_scroll(self, *args):
         self.text_area.yview(*args)
         self.line_numbers.yview(*args)
@@ -79,17 +82,20 @@ class Text_Editor(Widget):
     def update_line_numbers(self, event=None):
         self.line_numbers.config(state="normal")
         self.line_numbers.delete("1.0", "end")
-        
+        self.line_numbers.delete(1.0, tk.END)
+
         num_lines = int(self.text_area.index("end-1c").split(".")[0])
-        line_number_string = "\n".join(str(i) for i in range(1, num_lines + 1))
-        self.line_numbers.insert("1.0", line_number_string)
+        line_number_string = "\n".join(str(i) for i in range(1, num_lines + 1)).splitlines()
         
-        lines = self.line_numbers.get("1.0", "end-1c").split("\n")
-        max_line_length = max(len(line) for line in lines)
-        self.line_numbers.config(width=max_line_length)
+        max_length = max(len(line) for line in line_number_string)
+        for line in line_number_string:
+            spaces = ' ' * (max_length - len(line))
+            self.line_numbers.insert(tk.END, spaces + line + '\n')
+        self.line_numbers.delete("end-1c", "end")
         
-        self.line_numbers.config(state="disabled")
+        self.line_numbers.config(width=max_length)
         self.line_numbers.yview_moveto(self.text_area.yview()[0])
+        self.line_numbers.config(state="disabled")
     
     def browse_file(self):
         file_path = filedialog.askopenfilename(
