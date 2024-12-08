@@ -1,4 +1,4 @@
-# CMSC 124 Project by Compiled Nations 
+# LOLCODE Interpreter by Compiled Nations (CMSC 124 ST1L)
 
 ---
 
@@ -26,7 +26,7 @@
 
 ## 🚀 Installation
 
-Follow these steps to install **Project Name**:
+Follow these steps to install this program:
 
 ### Requirements
 Ensure you have the following installed:
