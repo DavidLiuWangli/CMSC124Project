@@ -75,18 +75,18 @@ class SyntaxSemanticAnalyzer:
         raise Exception()
 
     def access_symbol(self, variable):
-        if variable not in self.tokens:
+        if variable not in self.symbol_table:
             self.halt_analyzer(f"The key {variable} is not defined.")
             return None
 
-        return self.tokens[variable]
+        return self.symbol_table[variable]
 
-    def modify_symbol(self, variable, value):
-        if variable not in self.tokens:
+    def modify_symbol(self, variable, value, first=False):
+        if variable not in self.symbol_table and not first:
             self.halt_analyzer(f"The key {variable} is not defined.")
             return
 
-        self.tokens[variable] = value
+        self.symbol_table[variable] = value
 
     def can_execute(self):
         return self.execute and self.execute[-1]
@@ -261,7 +261,7 @@ class SyntaxSemanticAnalyzer:
                 declaration_variable = self.current_variable
 
                 if self.initialization():
-                    self.modify_symbol(declaration_variable, self.current_value) 
+                    self.modify_symbol(declaration_variable, self.current_value, True) 
                     
                     if self.end_of_line() and self.declarations():
                         return True
