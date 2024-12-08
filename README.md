@@ -1,6 +1,4 @@
-<h1> LOLCODE Interpreter </h1>
-### CMSC 124 Final Project by Compiled Nations
-
+# LOLCODE Interpreter
 ---
 
 ## 📋 Table of Contents
