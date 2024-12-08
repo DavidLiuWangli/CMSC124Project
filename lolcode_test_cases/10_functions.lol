@@ -3,6 +3,7 @@ HAI
         I HAS A name
         I HAS A num1
         I HAS A num2
+		I HAS A x
     BUHBYE
 
     HOW IZ I addNum YR x AN YR y
@@ -28,8 +29,10 @@ HAI
     I IZ printName YR name MKAY
     VISIBLE IT
 
+	x R 1
     I IZ printNum YR SUM OF x AN 2 MKAY
     VISIBLE IT
 
 KTHXBYE
+
 
