@@ -91,6 +91,11 @@ class SyntaxSemanticAnalyzer:
             self.position += 1
 
     def expect(self, token_type, token_value=None):
+        if token_type == "linebreak":
+            while token_type == "linebreak":
+                self.next()
+            return True
+        
         if token_value == "NOOB" and self.current_token() and self.tokens[self.position][0] == "NOOB":
             self.next()
             return True
@@ -118,17 +123,14 @@ class SyntaxSemanticAnalyzer:
             self.console.update_table(self.symbol_table)
             self.console.log(f"Completed {self.file_name}")
             return
-        
-        line_number = 0
-        lines = self.code.split('\n')
 
-        for number, line in enumerate(lines, start=1):
-            if self.unexpected_token in line:
-                line_number = number
-                break
-        
+        line_position = 1
+        for i in range(0, self.position):
+            if self.tokens[i][1] == "linebreak":
+                line_position += 1
+
         self.console.update_table(self.symbol_table)
-        self.console.log(f"{self.file_name}:{line_number} Unexpected token: {self.unexpected_token}")
+        self.console.log(f"{self.file_name}:{line_position} Unexpected token: {self.unexpected_token}")
 
     def outsides(self):
         if self.outside() and self.outsides():
@@ -484,7 +486,7 @@ class SyntaxSemanticAnalyzer:
     
     def concatenation(self):
         if self.expect("SMOOSH") and self.concatenation_operand():
-            self.current_concatenation = typecast_string(self.current_concatenation_operand) 
+            self.current_concatenation = typecast_string(self.current_concatenation_operand)
             
             if self.concatenation_operands():
                 return True
