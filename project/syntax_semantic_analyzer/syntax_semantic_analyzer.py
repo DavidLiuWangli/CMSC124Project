@@ -275,6 +275,9 @@ class SyntaxSemanticAnalyzer:
         if self.expect("I HAS A"):
             if self.variable_identifier():
                 declaration_variable = self.current_variable
+                
+                if self.variable_starting in self.symbol_table:
+                    self.halt_analyzer(f"The variable identifier {self.variable_starting} is already defined.")
 
                 if self.initialization():
                     self.modify_symbol(declaration_variable, self.current_value, True) 
@@ -1102,6 +1105,8 @@ class SyntaxSemanticAnalyzer:
 
         if self.expect("IM IN YR"):
             if self.loop_identifier():
+                opening_loop_identifier = self.current_loop
+
                 if self.loop_direction():
                     direction = self.current_direction
 
@@ -1116,15 +1121,21 @@ class SyntaxSemanticAnalyzer:
 
                                 if self.end_of_line() and self.control_body():
                                     
-                                    if self.expect("IM OUTTA YR") and self.loop_identifier() and self.end_of_line():
-                                        if self.can_execute():
-                                            self.modify_symbol(increment_variable, self.access_symbol(increment_variable) + direction)
-                                            self.position = loop_block_position
-                                            self.loop_block()
+                                    if self.expect("IM OUTTA YR") and self.loop_identifier():
+                                        closing_loop_identifier = self.current_loop
+                                        
+                                        if opening_loop_identifier != closing_loop_identifier:
+                                            self.halt_analyzer(f"The opening loop identifier {opening_loop_identifier} does not match with the closing loop identifier {closing_loop_identifier}")
 
-                                        self.previous.pop()
-                                        self.execute.pop()
-                                        return True
+                                        if self.end_of_line():
+                                            if self.can_execute():
+                                                self.modify_symbol(increment_variable, self.access_symbol(increment_variable) + direction)
+                                                self.position = loop_block_position
+                                                self.loop_block()
+
+                                            self.previous.pop()
+                                            self.execute.pop()
+                                            return True
 
             self.halt_analyzer()
  
@@ -1162,18 +1173,20 @@ class SyntaxSemanticAnalyzer:
         if self.expect("HOW IZ I"):
             if self.function_identifier():
                 self.function_references[self.current_function] = []
+                
                 if self.parameters() and self.end_of_line():
                     self.function_references[self.current_function].insert(0, self.position)
+                    
                     while True:
-                        #if self.expect("HOW IZ I"):
-                        #    break
                         if self.expect("IF U SAY SO"):
                             if self.end_of_line():
                                 print(f"New Function: {self.current_function}:{self.function_references[self.current_function]}")
                                 self.current_function = None
                                 return True
+                        
                         if self.position >= len(self.tokens):
                             break
+                        
                         self.next()
 
             self.halt_analyzer()
@@ -1316,6 +1329,7 @@ class SyntaxSemanticAnalyzer:
 
     def loop_identifier(self):
         if self.expect("varident"):
+            self.current_loop = self.previous_token()
             return True
         
         return False

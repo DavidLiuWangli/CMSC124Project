@@ -30,10 +30,11 @@ HAI
     VISIBLE IT
 
 	x R 1
-    I IZ printNum YR SUM OF x AN 2 MKAY
+    I IZ printNum YR SUM OF num1 AN 2 MKAY
     VISIBLE IT
 
 KTHXBYE
+
 
 
 

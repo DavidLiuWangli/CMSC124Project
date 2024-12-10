@@ -20,13 +20,13 @@ HAI
 		OMG 1
 			VISIBLE "Enter birth year: "
 			GIMMEH input
-			GTFO
+
 			VISIBLE DIFF OF 2022 AN input
+			GTFO
 		OMG 2
 			VISIBLE "Enter bill cost: "
 			GIMMEH input
 			VISIBLE "Tip: " + PRODUKT OF input AN 0.1
-			GTFO
 		OMG 3
 			VISIBLE "Enter width: "
 			GIMMEH input
@@ -39,6 +39,7 @@ HAI
 	OIC
 
 KTHXBYE
+
 
 
 

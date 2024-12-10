@@ -9,7 +9,7 @@ HAI
 
 	num2 R 0
 
-	IM IN YR asc UPPIN YR num2 WILE BOTH SAEM num2 AN SMALLR OF num2 AN num1
+	IM IN YR asc1 UPPIN YR num2 WILE BOTH SAEM num2 AN SMALLR OF num2 AN num1
 		VISIBLE num2
 	IM OUTTA YR asc
 
@@ -21,3 +21,4 @@ HAI
 
 
 KTHXBYE
+
